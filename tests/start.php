@@ -5,7 +5,6 @@ use tasker\Tasker;
 Tasker::run([
     //传入配置
     'worker_nums'=>1,
-    'workering_time'=>10,
     'hot_update_path'=>[
         dirname(__FILE__)
     ],

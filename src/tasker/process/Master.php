@@ -300,17 +300,40 @@ class Master extends Process
             posix_kill($this->_process_id,SIGINT);
             $timeout=5;
             $stime=time();
-            while(posix_kill($this->_process_id,0) && time()-$stime<$timeout);
+            while(posix_kill($this->_process_id,0) && time()-$stime<$timeout){
+                Op::sleep(0.1);
+            }
             if(posix_kill($this->_process_id,0))
             {
-                Console::display('hot update stop fail');
+                Console::log('hot update stop fail');
                 exit(0);
             }
             global $argv;
             $cp_argv=$argv;
             $cp_argv[0]=realpath($cp_argv[0]);
             $cmd='php '.join(' ',$cp_argv);
-            pclose(popen($cmd,'r'));
+            //防止重启失败 一直尝试重启
+            $last_open=0;
+            while(!is_file($this->cfg['pid_path']))
+            {
+                if(time()-$last_open>10)
+                {
+                    $fd=popen($cmd,'r');
+                    $last_open=time();
+                }
+                elseif(isset($fd) && time()-$last_open>5)
+                {
+                    pclose($fd);
+                    unset($fd);
+                }
+                Op::sleep(0.1);
+                pcntl_signal_dispatch();//捕捉kill信号
+            }
+            if(isset($fd))
+            {
+                pclose($fd);
+            }
+            Console::log('hot update restart success');
             exit(0);
         }
     }
