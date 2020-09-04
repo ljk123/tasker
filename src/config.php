@@ -11,7 +11,7 @@ return [
 
     ],
     'hot_update_interval'=>5,//热更新目录检查间隔 秒
-
+    'workering_time'=>7200,//每两小时重启进程 主要防止上游redis或者mysql保持链接被踢掉
     'retry_count'=>10,//任务失败 重试次数
 
     'database'=>[

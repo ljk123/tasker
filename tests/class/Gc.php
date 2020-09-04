@@ -9,13 +9,16 @@ use tasker\Tasker;
 
 class Gc
 {
-    private static $_instance=null;
+    //好像解决不了服务器剃掉链接的问题 定时重启进程吧
+    private static $_val=null;
     public function gc_test(){
-        if(is_null(self::$_instance))
+        if(is_null(self::$_val))
         {
-            self::$_instance=mt_rand(0,10);
+            self::$_val=mt_rand(0,10);
         }
-        Console::log(self::$_instance);
-        Tasker::push(__CLASS__,'gc_test');
+        Console::log(self::$_val);
+    }
+    public static function free(){
+     self::$_val=null;
     }
 }

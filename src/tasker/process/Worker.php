@@ -115,6 +115,11 @@ class Worker extends Process
                 //休息0.1秒 防止cpu常用
                 $cd=0.1;
                 Op::sleep($cd);
+                if($this->cfg['workering_time']>0 && Op::microtime()-$this->_status['start_time']>$this->cfg['workering_time'])
+                {
+                    //todo 保存状态
+                    exit(0);
+                }
                 if(false===$db->ping())
                 {
                     Database::free();
