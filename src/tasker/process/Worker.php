@@ -15,17 +15,12 @@ class Worker extends Process
 {
     protected $cfg;
     private $_status=[];
+    private $_start_time;
     public function __construct($cfg)
     {
-        $this->_status['start_memory']=memory_get_usage();
-        $this->_status['start_time']=Op::microtime();
-        $this->_status['success_count']=0;
-        $this->_status['fail_count']=0;
-        $this->_status['except_count']=0;
-        $this->_status['fast_speed']=null;
-        $this->_status['slow_speed']=null;
-        $this->_status['work_time']=0;
+        $this->_start_time=time();
         $this->cfg=$cfg;
+        $this->_initStatus();
         $this->setProcessTitle($this->cfg['worker_title']);
         $this->_process_id = posix_getpid();
         Console::log("worker ".$this->_process_id." start success");
@@ -33,6 +28,27 @@ class Worker extends Process
         if($this->cfg['tasker_user'])
         {
             $this->setUser($this->cfg['tasker_user']);
+        }
+    }
+
+    private function _initStatus()
+    {
+        $redis=Redis::getInstance($this->cfg['redis']);
+        $res=$redis->lpop($this->cfg['redis']['queue_key'].'_reload_status');
+        $load_status=$res?unserialize($res):[];
+        if($load_status)
+        {
+            $this->_status=$load_status;
+        }
+        else {
+            $this->_status['start_memory'] = memory_get_usage();
+            $this->_status['start_time'] = Op::microtime();
+            $this->_status['success_count'] = 0;
+            $this->_status['fail_count'] = 0;
+            $this->_status['except_count'] = 0;
+            $this->_status['fast_speed'] = null;
+            $this->_status['slow_speed'] = null;
+            $this->_status['work_time'] = 0;
         }
     }
 
@@ -45,7 +61,7 @@ class Worker extends Process
             $redis=Redis::getInstance($cfg['redis']);
             $db=Database::getInstance($cfg['database']);
             $taster=$redis->lpop($cfg['redis']['queue_key']);
-            if($taster && $taster=json_decode($taster,true))
+            if($taster && $taster=unserialize($taster))
             {
                 $start=Op::microtime();
                 $db->beginTransaction();
@@ -115,18 +131,15 @@ class Worker extends Process
                 //休息0.1秒 防止cpu常用
                 $cd=0.1;
                 Op::sleep($cd);
-                if($this->cfg['workering_time']>0 && Op::microtime()-$this->_status['start_time']>$this->cfg['workering_time'])
+                if($this->cfg['workering_time']>0 && time()-$this->_start_time>$this->cfg['workering_time'])
                 {
-                    //todo 保存状态
+                    $redis->lpush($cfg['redis']['queue_key'].'_reload_status',serialize($this->_status));
+                    Console::log("worked ".$this->cfg['workering_time']."s reload worker");
                     exit(0);
                 }
                 if(false===$db->ping())
                 {
                     Database::free();
-                }
-                if(false===$redis->ping())
-                {
-                    Redis::free();
                 }
             }
         }

@@ -41,16 +41,12 @@ class Provider
                     'payload'=>$task['payload'],
                     'id'=>$task['id'],
                 ];
-                $redis->lpush($cfg['redis']['queue_key'],json_encode($tasker));
+                $redis->lpush($cfg['redis']['queue_key'],serialize($tasker));
             }
             $db->commit();
         }
         else{
             //心跳检查
-            if(false===$db->ping())
-            {
-                Database::free();
-            }
             if(false===$redis->ping())
             {
                 Redis::free();
