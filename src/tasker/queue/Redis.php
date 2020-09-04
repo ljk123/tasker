@@ -6,9 +6,14 @@ namespace tasker\queue;
 use tasker\exception\RedisException;
 use tasker\traits\Singleton;
 
+/**
+ * Class Redis
+ * @package tasker\queue
+ */
 class Redis
 {
     use Singleton;
+    /**@var \Redis*/
     protected $redis;
     private function __construct($cfg)
     {
@@ -25,9 +30,13 @@ class Redis
         {
             $this->redis->auth($cfg['pwd']);
         }
-        if(false===$this->redis->ping())
-        {
-            throw new RedisException('ping redis error');
+        try {
+            if (false === $this->redis->ping()) {
+                throw new RedisException('ping redis error');
+            }
+        } catch (\RedisException $e) {
+            throw new RedisException($e->getMessage());
+        } catch (RedisException $e) {
         }
     }
     private function __clone()

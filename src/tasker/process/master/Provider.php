@@ -4,6 +4,7 @@
 namespace tasker\process\master;
 
 
+use tasker\exception\DatabaseException;
 use tasker\queue\Database;
 use tasker\queue\Redis;
 
@@ -12,13 +13,18 @@ class Provider
     /**
      *
      * @param $cfg
-     * @throws \tasker\exception\DatabaseException
+     * @throws DatabaseException
      */
     public static function moveToList($cfg){
-        //从database移到mysql
+        //从database移到redis
+        /**@var $redis Redis*/
+        $redis=Redis::getInstance($cfg['redis']);
+        if($redis->lLen($cfg['redis']['queue_key'])>1000)
+        {
+            return;
+        }
         /**@var $db Database*/
         $db=Database::getInstance($cfg['database']);
-        $redis=Redis::getInstance($cfg['redis']);
         $result=$db->query('select id,payload,dotimes from ' . $cfg['database']['table'] .
             ' where doat<' . time() . ' and dotimes<' . $cfg['retry_count'] .
             ' and startat=0 limit 1000');
@@ -44,13 +50,6 @@ class Provider
                 $redis->lpush($cfg['redis']['queue_key'],serialize($tasker));
             }
             $db->commit();
-        }
-        else{
-            //心跳检查
-            if(false===$redis->ping())
-            {
-                Redis::free();
-            }
         }
     }
 

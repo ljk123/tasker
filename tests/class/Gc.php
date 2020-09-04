@@ -16,7 +16,6 @@ class Gc
         {
             self::$_val=mt_rand(0,10);
         }
-        Console::log(self::$_val);
     }
     public static function free(){
      self::$_val=null;

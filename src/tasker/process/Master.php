@@ -281,10 +281,9 @@ class Master extends Process
         Redis::free();
         $pid = pcntl_fork();
         // 父进程
-        if ($pid > 0) {
-            //等待
-        } else if ($pid === 0) { // 重启子进程
+        if ($pid === 0) { // 重启子进程
             //发送结束信号
+            Console::log('hot update restart');
             $this->setProcessTitle('task_hot_update');
             posix_kill($this->_process_id,SIGINT);
             $timeout=5;
@@ -292,7 +291,7 @@ class Master extends Process
             while(posix_kill($this->_process_id,0) && time()-$stime<$timeout);
             if(posix_kill($this->_process_id,0))
             {
-                Console::display('stop fail');
+                Console::display('hot update stop fail');
                 exit(0);
             }
             global $argv;
@@ -301,8 +300,6 @@ class Master extends Process
             $cmd='php '.join(' ',$cp_argv);
             pclose(popen($cmd,'r'));
             exit(0);
-        } else {
-            //创建子进程失败
         }
     }
     public function run(){

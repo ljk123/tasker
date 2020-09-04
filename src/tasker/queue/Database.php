@@ -4,6 +4,8 @@
 namespace tasker\queue;
 
 
+use PDO;
+use PDOException;
 use tasker\exception\DatabaseException;
 use tasker\traits\Singleton;
 
@@ -16,8 +18,8 @@ class Database
     {
         try{
             //连接数据库，选择数据库
-            $pdo = new \PDO("mysql:host=".$cfg['host'].":".$cfg['port'].";dbname=".$cfg['db'].";charset=".$cfg['charset'],$cfg['user'],$cfg['pwd']);
-        } catch (\PDOException $e){
+            $pdo = new PDO("mysql:host=".$cfg['host'].":".$cfg['port'].";dbname=".$cfg['db'].";charset=".$cfg['charset'],$cfg['user'],$cfg['pwd']);
+        } catch (PDOException $e){
             //输出异常信息
             throw new DatabaseException('fail to connect db:'.$e->getMessage());
         }
@@ -32,7 +34,7 @@ class Database
         if (false === $PDOStatement) {
             throw new DatabaseException('sql error:' . $sql);
         }
-        return $PDOStatement->fetchAll(\PDO::FETCH_ASSOC);
+        return $PDOStatement->fetchAll(PDO::FETCH_ASSOC);
     }
     public function exce($sql){
         if (false === $num=$this->pdo->exec($sql)) {
@@ -42,7 +44,7 @@ class Database
     }
     public function ping(){
         try{
-            $this->pdo->getAttribute(\PDO::ATTR_SERVER_INFO);
+            $this->pdo->getAttribute(PDO::ATTR_SERVER_INFO);
         } catch (PDOException $e) {
             if(strpos($e->getMessage(), 'MySQL server has gone away')!==false){
                 return false;
