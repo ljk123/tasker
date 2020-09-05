@@ -4,6 +4,7 @@
 namespace tasker\process;
 
 
+use http\Exception;
 use tasker\Console;
 use tasker\exception\ClassNotFoundException;
 use tasker\Op;
@@ -82,12 +83,26 @@ class Worker extends Process
                         {
                             throw new ClassNotFoundException($payload[0]);
                         }
-                        $class=new $payload[0];
-                        if(!method_exists($class,$payload[1]))
+                        $class=new \ReflectionClass($payload[0]);
+                        if(!method_exists($payload[0],$payload[1]) && !method_exists($payload[0],'__call'))
                         {
                             throw new ClassNotFoundException($payload[0],$payload[1]);
                         }
-                        if(false===call_user_func([(new $payload[0]),$payload[1]],...$payload[2]))
+                        if(!method_exists($payload[0],$payload[1]))
+                        {
+                            //调用__call墨书方法
+                            $callback=[(new $payload[0]),$payload[1]];
+                        }
+                        else{
+                            if($class->getMethod($payload[1])->isStatic())
+                            {
+                                $callback=[ $payload[0],$payload[1]];
+                            }
+                            else{
+                                $callback=[(new $payload[0]),$payload[1]];
+                            }
+                        }
+                        if(false===call_user_func($callback,...$payload[2]))
                         {
                             throw new RetryException(serialize($taster));
                         }
@@ -97,24 +112,32 @@ class Worker extends Process
                     $db->commit();
                     $this->_status['success_count']++;
                 }
+                catch (\Throwable $e)
+                {
+                    //高版本抛出error
+                }
                 catch (\Exception $e)
                 {
-                    $db->rollBack();
-                    if($e instanceof RetryException)
-                    {
-                        //重新放入队列
-                        $db->exce('update ' .
-                            $cfg['database']['table'] . ' set
-                            dotimes=dotimes+1 where id ='.$taster['id']);
-                        $redis->lpush($cfg['redis']['queue_key'],$e->getMessage());
-                        $this->_status['fail_count']++;
-                    }
-                    else{
-                        //记录异常
-                        $db->exce('update ' . $cfg['database']['table'] . ' set startat=0,dotimes=99, exception="' . addslashes($e->getMessage()) . '" where id=' . $taster['id']);
-                        $this->_status['except_count']++;
-                    }
+
                 } finally {
+                    if(!empty($e))
+                    {
+                        $db->rollBack();
+                        if($e instanceof RetryException)
+                        {
+                            //重新放入队列
+                            $db->exce('update ' .
+                                $cfg['database']['table'] . ' set
+                            dotimes=dotimes+1 where id ='.$taster['id']);
+                            $redis->lpush($cfg['redis']['queue_key'],$e->getMessage());
+                            $this->_status['fail_count']++;
+                        }
+                        else{
+                            //记录异常
+                            $db->exce('update ' . $cfg['database']['table'] . ' set startat=0,dotimes=99, exception="' . addslashes($e->getMessage()) . '" where id=' . $taster['id']);
+                            $this->_status['except_count']++;
+                        }
+                    }
                     $use=Op::microtime()-$start;
                     if(is_null($this->_status['slow_speed']) || $use>$this->_status['slow_speed'])
                     {
@@ -149,7 +172,6 @@ class Worker extends Process
         pcntl_signal(SIGINT, array($this, 'signalHandler'), false);
         // SIGTERM
         pcntl_signal(SIGTERM, array($this, 'signalHandler'), false);
-
         // SIGUSR1
         pcntl_signal(SIGUSR1, array($this, 'signalHandler'), false);
         // SIGUSR2

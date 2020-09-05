@@ -24,4 +24,4 @@ Tasker::cfg([
         'charset'=>'utf8'
     ],
 ]);
-Tasker::push(\tests\Gc::class,'gc_test');
+Tasker::push(\tests\Tasker::class,'test');

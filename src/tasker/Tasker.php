@@ -196,7 +196,7 @@ Use \"--help\" for more information about a command.\n";
             $worker_text.="pid\tsuccess_count\tfail_count\texcept_count".PHP_EOL;
             foreach ($worker_status as $v)
             {
-                $worker_text.=$v['process_id']."\t".$v['success_count']."\t\t".$v['fail_count']."\t\t".$v['except_count']."".PHP_EOL;
+                $worker_text.=$v['process_id']."\t".$v['success_count']."\t\t".Console::color($v['fail_count'],$v['fail_count']>0?'Yellow':'')."\t\t".Console::color($v['except_count'],$v['except_count']>0?'Red':'')."".PHP_EOL;
             }
         }
         if(empty($options) || in_array('-m',$options))
