@@ -57,7 +57,7 @@ class Provider
             {
                 //10分钟前开始 没完成的
                 $db->exce('update ' .
-                    $cfg['database']['table'] . ' set startat=0 where startat>0 and endat=0 and startat<'.(time()-600));
+                    $cfg['database']['table'] . ' set startat=0 where dotimes<10 and  startat>0 and endat=0 and startat<'.(time()-600));
             }
         }
     }

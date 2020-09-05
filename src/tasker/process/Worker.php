@@ -122,14 +122,18 @@ class Worker extends Process
                 } finally {
                     if(!empty($e))
                     {
-                        $db->rollBack();
+                        if($db->inTransaction())
+                        {
+                            $db->rollBack();
+                        }
                         if($e instanceof RetryException)
                         {
                             //重新放入队列
-                            $db->exce('update ' .
+                            if($db->exce('update ' .
                                 $cfg['database']['table'] . ' set
-                            dotimes=dotimes+1 where id ='.$taster['id']);
-                            $redis->lpush($cfg['redis']['queue_key'],$e->getMessage());
+                            dotimes=dotimes+1 where dotimes<10 and id ='.$taster['id'])){
+                                $redis->lpush($cfg['redis']['queue_key'],$e->getMessage());
+                            }
                             $this->_status['fail_count']++;
                         }
                         else{
@@ -137,6 +141,7 @@ class Worker extends Process
                             $db->exce('update ' . $cfg['database']['table'] . ' set startat=0,dotimes=99, exception="' . addslashes($e->getMessage()) . '" where id=' . $taster['id']);
                             $this->_status['except_count']++;
                         }
+                        unset($e);
                     }
                     $use=Op::microtime()-$start;
                     if(is_null($this->_status['slow_speed']) || $use>$this->_status['slow_speed'])
