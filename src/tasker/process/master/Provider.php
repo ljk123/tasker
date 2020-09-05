@@ -51,6 +51,15 @@ class Provider
             }
             $db->commit();
         }
+        else{
+            //如果队列长度为空 吧为完成的改回去
+            if($redis->lLen($cfg['redis']['queue_key'])==0)
+            {
+                //10分钟前开始 没完成的
+                $db->exce('update ' .
+                    $cfg['database']['table'] . ' set startat=0 where startat>0 and endat=0 and startat<'.(time()-600));
+            }
+        }
     }
 
 }
