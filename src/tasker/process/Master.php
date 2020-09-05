@@ -21,11 +21,25 @@ class Master extends Process
     private $_status=[];
     public function __construct($cfg)
     {
-        $this->_status['start_memory']=memory_get_usage();
-        $this->_status['start_time']=Op::microtime();
+
         $this->cfg=$cfg;
+        $this->_initStatus();
         $this->setProcessTitle($this->cfg['master_title']);
         $this->_process_id = posix_getpid();
+    }
+    private function _initStatus()
+    {
+        $redis=Redis::getInstance($this->cfg['redis']);
+        $res=$redis->lpop($this->cfg['redis']['queue_key'].'_master_status');
+        $load_status=$res?unserialize($res):[];
+        if($load_status)
+        {
+            $this->_status=$load_status;
+        }
+        else {
+            $this->_status['start_memory']=memory_get_usage();
+            $this->_status['start_time']=Op::microtime();
+        }
     }
     protected function saveMasterPid()
     {
@@ -284,18 +298,28 @@ class Master extends Process
             {
                 echo  $e->getMessage();
             }
-            Op::sleep(0.1);
+            Op::sleep(0.5);
             pcntl_signal_dispatch();
         }
     }
     protected function hotUpdate(){
         Database::free();
         Redis::free();
+        Console::log('hot update restart start');
         $pid = pcntl_fork();
         // 父进程
-        if ($pid === 0) { // 重启子进程
+        if($pid>0)
+        {
+            //通知子进程保存状态退出
+            foreach ($this->_workers as $workerPid) {
+                posix_kill($workerPid, SIGUSR2);
+            }
+            //保存主进程状态
+            Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_master_status',serialize($this->_status));
+            sleep(1);
+        }
+        elseif ($pid === 0) { // 重启子进程
             //发送结束信号
-            Console::log('hot update restart');
             $this->setProcessTitle('task_hot_update');
             posix_kill($this->_process_id,SIGINT);
             $timeout=5;
@@ -318,6 +342,7 @@ class Master extends Process
             {
                 if(time()-$last_open>10)
                 {
+                    Console::log("test popen$last_open");
                     $fd=popen($cmd,'r');
                     $last_open=time();
                 }

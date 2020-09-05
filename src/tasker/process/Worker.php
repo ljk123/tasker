@@ -89,7 +89,7 @@ class Worker extends Process
                         }
                         if(false===call_user_func([(new $payload[0]),$payload[1]],...$payload[2]))
                         {
-                            throw new RetryException(json_encode($taster));
+                            throw new RetryException(serialize($taster));
                         }
                         //任务标记未成功
                         $db->exce('update ' . $cfg['database']['table'] . ' set endat=' . time() . ' where id=' . $taster['id']);
@@ -133,9 +133,7 @@ class Worker extends Process
                 Op::sleep($cd);
                 if($this->cfg['workering_time']>0 && time()-$this->_start_time>$this->cfg['workering_time'])
                 {
-                    $redis->lpush($cfg['redis']['queue_key'].'_reload_status',serialize($this->_status));
-                    Console::log("worked ".$this->cfg['workering_time']."s reload worker");
-                    exit(0);
+                    $this->saveStatusReload("worked ".$this->cfg['workering_time']."s reload worker");
                 }
                 if(false===$db->ping())
                 {
@@ -154,10 +152,11 @@ class Worker extends Process
 
         // SIGUSR1
         pcntl_signal(SIGUSR1, array($this, 'signalHandler'), false);
+        // SIGUSR2
+        pcntl_signal(SIGUSR2, array($this, 'signalHandler'), false);
 
 
         // 忽略信号
-        pcntl_signal(SIGUSR2, SIG_IGN, false);
         pcntl_signal(SIGHUP, SIG_IGN, false);
         pcntl_signal(SIGPIPE, SIG_IGN, false);
         pcntl_signal(SIGQUIT, SIG_IGN, false);
@@ -179,9 +178,17 @@ class Worker extends Process
             case SIGUSR1:
                 $this->status();
                 break;
+            case SIGUSR2:
+                $this->saveStatusReload("worker hot update reload stop");
+                break;
             default:
                 break;
         }
+    }
+    protected function saveStatusReload($msg){
+        Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_reload_status',serialize($this->_status));
+        Console::log($msg);
+        exit(0);
     }
     protected function stop()
     {
