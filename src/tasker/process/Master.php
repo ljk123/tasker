@@ -6,6 +6,7 @@ namespace tasker\process;
 
 use tasker\Console;
 use tasker\Op;
+use tasker\process\master\Gc;
 use tasker\process\master\HotUpdate;
 use tasker\queue\Database;
 use tasker\process\master\Provider;
@@ -298,6 +299,8 @@ class Master extends Process
             try{
                 //读取任务丢到list里
                 Provider::moveToList($this->cfg);
+                //gc
+                Gc::table($this->cfg);
                 //扫描监听目录变化 重启master
                 if(HotUpdate::check($this->cfg['hot_update_path'],$this->cfg['hot_update_interval'])){
                     $this->hotUpdate();

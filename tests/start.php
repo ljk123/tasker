@@ -8,8 +8,7 @@ Tasker::run([
     'hot_update_path'=>[
         dirname(__FILE__)
     ],
-    'keep_workering_callback'=>function(){},
-    'keep_workering_ping_interval'=>600,
+    'gc_table_day'=>2,
     'redis'=>[
         'host'=>'127.0.0.1',
         'port'=>6379,

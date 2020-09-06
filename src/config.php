@@ -16,6 +16,8 @@ return [
     'keep_workering_ping_interval'=>600,//上游创建redis 或者mysql链接 为了保持链接 每隔多少秒执行一次回调 配和keep_workering_callback使用
     'retry_count'=>10,//任务失败 重试次数
 
+    'gc_table_day'=>null,//table 保存几天的成功数据 防止表过大 null为不删除
+
     'database'=>[
         'host'=>'127.0.0.1',
         'db'=>'task',
