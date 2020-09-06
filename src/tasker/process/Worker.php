@@ -4,13 +4,13 @@
 namespace tasker\process;
 
 
-use http\Exception;
 use tasker\Console;
 use tasker\exception\ClassNotFoundException;
 use tasker\Op;
 use tasker\queue\Database;
 use tasker\exception\RetryException;
 use tasker\queue\Redis;
+use ReflectionClass;
 
 class Worker extends Process
 {
@@ -83,7 +83,7 @@ class Worker extends Process
                         {
                             throw new ClassNotFoundException($payload[0]);
                         }
-                        $class=new \ReflectionClass($payload[0]);
+                        $class=new ReflectionClass($payload[0]);
                         if(!method_exists($payload[0],$payload[1]) && !method_exists($payload[0],'__call'))
                         {
                             throw new ClassNotFoundException($payload[0],$payload[1]);
@@ -96,6 +96,7 @@ class Worker extends Process
                         else{
                             if($class->getMethod($payload[1])->isStatic())
                             {
+                                //静态方法调用
                                 $callback=[ $payload[0],$payload[1]];
                             }
                             else{
@@ -106,26 +107,24 @@ class Worker extends Process
                         {
                             throw new RetryException(serialize($taster));
                         }
-                        //任务标记未成功
-                        $db->exce('update ' . $cfg['database']['table'] . ' set endat=' . time() . ' where id=' . $taster['id']);
+                        //任务标记为成功
+                        $db->exce('update ' . $cfg['database']['table'] .
+                            ' set endat=' . time() . ' where id=' . $taster['id']);
                     }
                     $db->commit();
                     $this->_status['success_count']++;
                 }
                 catch (\Throwable $e)
                 {
-                    //高版本抛出error
+                    //php高版本抛出error
                 }
                 catch (\Exception $e)
                 {
-
+                    //不支持Throwable的低版本
                 } finally {
                     if(!empty($e))
                     {
-                        if($db->inTransaction())
-                        {
-                            $db->rollBack();
-                        }
+                        $db->rollBack();
                         if($e instanceof RetryException)
                         {
                             //重新放入队列
@@ -239,7 +238,7 @@ class Worker extends Process
         $work_time=Op::dtime($this->_status['work_time']);
         $agv_speed=$complete_count>0?round($complete_count/$this->_status['work_time'],2):0;
         $sleep_time=Op::dtime($_now_time-$this->_status['start_time']-$this->_status['work_time']);
-        $data=serialize(compact(
+        $data=compact(
             'process_id',
             'memory',
                 'runtime',
@@ -251,8 +250,8 @@ class Worker extends Process
                 'slow_speed',
                 'agv_speed',
                 'work_time'
-            )).PHP_EOL;
-        file_put_contents('/tmp/status.'.posix_getppid(),$data,FILE_APPEND|LOCK_EX);
+            );
+        Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_status_data',serialize($data));
     }
 
 }

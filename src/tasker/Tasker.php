@@ -148,8 +148,13 @@ Use \"--help\" for more information about a command.\n";
         }
 
     }
-    protected static function displayStatus($status_content,$masterPid){
 
+    /**
+     * status输出样式
+     * @param $status_content
+     * @param $masterPid
+     */
+    protected static function displayStatus($status_content,$masterPid){
         $status_array=explode(PHP_EOL,$status_content);
         $master_status=[];
         $worker_status=[];
@@ -341,22 +346,24 @@ Use \"--help\" for more information about a command.\n";
     /**
      * 添加任务
      * @param string $class_name 类名
-     * @param string $medoth_name 方法名
+     * @param string $method_name 方法名
      * @param array $param 参数 ...模式传入
      * @param mixed $doat 时间戳
+     * @param bool $is_repeat 是否允许重复任务
      */
-    public static function push($class_name,$medoth_name,$param=[],$doat=null){
+    public static function push($class_name,$method_name,$param=[],$doat=null,$is_repeat=false){
 
-        self::delay($class_name,$medoth_name,$param,$doat);
+        self::delay($class_name,$method_name,$param,$doat,$is_repeat);
     }
 
     /**
      * @param string $class_name 类名
-     * @param string $medoth_name 方法名
+     * @param string $method_name 方法名
      * @param array $param 参数
      * @param mixed $doat 时间戳
+     * @param bool $is_repeat 是否允许重复任务
      */
-    public static function delay($class_name,$medoth_name,$param=[],$doat=null){
+    public static function delay($class_name,$method_name,$param=[],$doat=null,$is_repeat=false){
         if(empty(self::$cfg)) {
             //输入配置
             self::cfg();
@@ -364,10 +371,20 @@ Use \"--help\" for more information about a command.\n";
         $cfg=self::$cfg;
         $payload=[
             $class_name,
-            $medoth_name,
+            $method_name,
             $param
         ];
         $doat=$doat?:time();
+        if(!$is_repeat)
+        {
+            $sql='SELECT count(1) counts FROM '.$cfg['database']['table'].
+                ' WHERE payload="'.addslashes(json_encode($payload)).'" and startat=0 and dotimes<10';
+            $res=Database::getInstance(self::$cfg['database'])->query($sql);
+            if($res[0]['counts']>0)
+            {
+                return;
+            }
+        }
         $sql='INSERT INTO '.$cfg['database']['table'].
             '(payload,doat) VALUES("'.addslashes(json_encode($payload)).'",'.$doat.')';
 //        var_dump($sql);

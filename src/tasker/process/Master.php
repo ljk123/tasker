@@ -124,17 +124,25 @@ class Master extends Process
         $memory=Op::memory2M( memory_get_usage()-$this->_status['start_memory']);
         //运行了多少时间
         $runtime=Op::dtime(Op::microtime()-$this->_status['start_time']);
-        file_put_contents('/tmp/status.'.$this->_process_id,serialize(compact(
-                'process_id',
-                      'memory',
-                         'runtime',
-                         'start_time'
-            )).PHP_EOL,FILE_APPEND|LOCK_EX);
         $allWorkerPid = $this->_workers;
         foreach ($allWorkerPid as $workerPid) {
             posix_kill($workerPid, SIGUSR1);
         }
+        while(count($this->_workers)>Redis::getInstance($this->cfg['redis'])->lLen($this->cfg['redis']['queue_key'].'_status_data')){
+            Op::sleep(0.1);
+        }
+        $file_content=serialize(compact(
+                'process_id',
+                'memory',
+                'runtime',
+                'start_time'
+            )).PHP_EOL;
 
+        while($data=Redis::getInstance($this->cfg['redis'])->lpop($this->cfg['redis']['queue_key'].'_status_data'))
+        {
+            $file_content.=$data.PHP_EOL;
+        }
+        file_put_contents('/tmp/status.'.$this->_process_id,$file_content);
 
     }
 
