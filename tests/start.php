@@ -4,10 +4,12 @@ require_once dirname(__FILE__).'/../vendor/autoload.php';
 use tasker\Tasker;
 Tasker::run([
     //传入配置
-    'worker_nums'=>1,
+    'worker_nums'=>2,
     'hot_update_path'=>[
         dirname(__FILE__)
     ],
+    'keep_workering_callback'=>function(){echo 'keep'.PHP_EOL;},
+    'keep_workering_ping_interval'=>10,
     'redis'=>[
         'host'=>'127.0.0.1',
         'port'=>6379,

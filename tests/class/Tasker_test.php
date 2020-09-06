@@ -25,6 +25,5 @@ class Tasker_test
         {
             Tasker::push(__CLASS__,'test');
         }
-
     }
 }

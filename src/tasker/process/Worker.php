@@ -54,7 +54,6 @@ class Worker extends Process
     }
 
     public function run(){
-        // 模拟调度,实际用event实现
         while (1) {
             // 捕获信号
             pcntl_signal_dispatch();
@@ -161,6 +160,18 @@ class Worker extends Process
                 if($this->cfg['workering_time']>0 && time()-$this->_start_time>$this->cfg['workering_time'])
                 {
                     $this->saveStatusReload("worked ".$this->cfg['workering_time']."s reload worker");
+                }
+                if($this->cfg['keep_workering_callback'] instanceof \Closure)
+                {
+                    if($this->cfg['keep_workering_ping_interval']>0)
+                    {
+                        static $last_keep=0;
+                        if(time()-$last_keep>$this->cfg['keep_workering_ping_interval'])
+                        {
+                            $last_keep=time();
+                            call_user_func($this->cfg['keep_workering_callback'] );
+                        }
+                    }
                 }
                 if(false===$db->ping())
                 {

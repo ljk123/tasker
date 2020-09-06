@@ -345,26 +345,17 @@ class Master extends Process
             $cp_argv[0]=realpath($cp_argv[0]);
             $cmd='php '.join(' ',$cp_argv);
             //防止重启失败 一直尝试重启
-            $last_open=0;
+            $last_call=0;
             while(!is_file($this->cfg['pid_path']))
             {
-                if(time()-$last_open>10)
+                if(time()-$last_call>10)
                 {
-                    Console::log("test popen$last_open");
-                    $fd=popen($cmd,'r');
-                    $last_open=time();
-                }
-                elseif(isset($fd) && time()-$last_open>5)
-                {
-                    pclose($fd);
-                    unset($fd);
+                    Console::log("hot update call start $last_call");
+                    system($cmd);
+                    $last_call=time();
                 }
                 Op::sleep(0.1);
                 pcntl_signal_dispatch();//捕捉kill信号
-            }
-            if(isset($fd))
-            {
-                pclose($fd);
             }
             Console::log('hot update restart success');
             exit(0);

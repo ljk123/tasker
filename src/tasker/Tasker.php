@@ -201,7 +201,7 @@ Use \"--help\" for more information about a command.\n";
             $worker_text.="pid\tsuccess_count\tfail_count\texcept_count".PHP_EOL;
             foreach ($worker_status as $v)
             {
-                $worker_text.=$v['process_id']."\t".$v['success_count']."\t\t".Console::color($v['fail_count'],$v['fail_count']>0?'Yellow':'')."\t\t".Console::color($v['except_count'],$v['except_count']>0?'Red':'')."".PHP_EOL;
+                $worker_text.=$v['process_id']."\t".Console::color($v['success_count'],'SUCCESS')."\t\t".Console::color($v['fail_count'],$v['fail_count']>0?'Yellow':'')."\t\t".Console::color($v['except_count'],$v['except_count']>0?'Red':'')."".PHP_EOL;
             }
         }
         if(empty($options) || in_array('-m',$options))
@@ -290,10 +290,10 @@ Use \"--help\" for more information about a command.\n";
             Redis::getInstance($cfg['redis'])->ping();
             if(!empty($cfg['hot_update_path']))
             {
-                //判断是否支持pclose、popen
-                if(!self::functionCheck('pclose,popen'))
+                //判断是否支持system
+                if(!self::functionCheck('system'))
                 {
-                    throw new Exception('pclose | popen has been disabled');
+                    throw new Exception('function system has been disabled');
                 }
             }
         }
