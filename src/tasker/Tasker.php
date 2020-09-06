@@ -18,13 +18,16 @@ class Tasker
     /**
      * 守护态运行.
      */
-    protected static function daemonize()
+    protected static function daemonize($options)
     {
         $pid = pcntl_fork();
         if (-1 === $pid) {
             Console::display('process fork fail');
         } elseif ($pid > 0) {
-            Console::header();
+            if(!in_array('-no_header',$options))
+            {
+                Console::header();
+            }
             exit(0);
         }
         //  子进程了
@@ -139,14 +142,14 @@ Use \"--help\" for more information about a command.\n";
                 Op::sleep(0.1*$cfg['worker_nums']);
                 $status_content=file_get_contents($path);
                 @unlink($path);
-                self::displayStatus($status_content,$masterPid);
+                self::displayStatus($status_content,$masterPid,$options);
 
                 exit(0);
 
             default:
                 Console::display($usage);
         }
-
+        return $options;
     }
 
     /**
@@ -154,7 +157,7 @@ Use \"--help\" for more information about a command.\n";
      * @param $status_content
      * @param $masterPid
      */
-    protected static function displayStatus($status_content,$masterPid){
+    protected static function displayStatus($status_content,$masterPid,$options){
         $status_array=explode(PHP_EOL,$status_content);
         $master_status=[];
         $worker_status=[];
@@ -273,6 +276,10 @@ Use \"--help\" for more information about a command.\n";
             {
                 throw new Exception('pcntl_* functions has been disabled');
             }
+            if(!is_null($cfg['keep_workering_callback']) && !$cfg['keep_workering_callback'] instanceof \Closure)
+            {
+                throw new Exception('keep_workering_callback is not a closure');
+            }
 
             if($cfg['worker_nums']<=0)
             {
@@ -336,9 +343,9 @@ Use \"--help\" for more information about a command.\n";
     {
         self::checkEnv();
         self::parseCfg($cfg);
-        self::parseCmd($cfg);
+        $options=self::parseCmd($cfg);
         self::checkCfg($cfg);
-        self::daemonize();
+        self::daemonize($options);
         self::$cfg=$cfg;
         (new Master($cfg))->run();
     }

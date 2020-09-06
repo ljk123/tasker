@@ -324,7 +324,11 @@ class Master extends Process
             }
             //保存主进程状态
             Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_master_status',serialize($this->_status));
-            sleep(1);
+            while (1)
+            {
+                Op::sleep(0.01);
+                pcntl_signal_dispatch();
+            }
         }
         elseif ($pid === 0) { // 重启子进程
             //发送结束信号
@@ -343,6 +347,11 @@ class Master extends Process
             global $argv;
             $cp_argv=$argv;
             $cp_argv[0]=realpath($cp_argv[0]);
+            if(!in_array('-no_header',$cp_argv))
+            {
+                $cp_argv[]='-no_header';
+            }
+
             $cmd='php '.join(' ',$cp_argv);
             //防止重启失败 一直尝试重启
             $last_call=0;
