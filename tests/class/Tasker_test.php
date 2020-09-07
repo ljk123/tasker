@@ -1,6 +1,7 @@
 <?php
 namespace tests;
 
+use tasker\Console;
 use tasker\exception\Exception;
 use tasker\Op;
 use tasker\Tasker;
@@ -25,5 +26,12 @@ class Tasker_test
         {
             Tasker::push(__CLASS__,'test');
         }
+    }
+    public function keep(){
+        Console::log('keep');
+    }
+    public static function skeep(){
+
+        Console::log('skeep');
     }
 }

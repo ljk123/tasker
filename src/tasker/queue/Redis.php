@@ -20,15 +20,12 @@ class Redis
         //连接数据库，选择数据库
         $this->redis = new \Redis();
         $this->redis->connect($cfg['host'], $cfg['port'], $cfg['timeout']);
-        if ('' != $cfg['pwd']) {
+        if(!empty($cfg['pwd']))
+        {
             $this->redis->auth($cfg['pwd']);
         }
         if (0 != $cfg['db']) {
             $this->redis->select($cfg['db']);
-        }
-        if(!empty($cfg['pwd']))
-        {
-            $this->redis->auth($cfg['pwd']);
         }
         try {
             if (false === $this->redis->ping()) {

@@ -161,7 +161,7 @@ class Worker extends Process
                 {
                     $this->saveStatusReload("worked ".$this->cfg['workering_time']."s reload worker");
                 }
-                if($this->cfg['keep_workering_callback'] instanceof \Closure)
+                if(!is_null($this->cfg['keep_workering_callback']))
                 {
                     if($this->cfg['keep_workering_ping_interval']>0)
                     {
