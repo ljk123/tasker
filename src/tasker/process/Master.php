@@ -314,8 +314,8 @@ class Master extends Process
         }
     }
     protected function hotUpdate(){
-        Database::free();
-        Redis::free();
+//        Database::free();
+//        Redis::free();
         Console::log('hot update restart start');
         $pid = pcntl_fork();
         // 父进程

@@ -3,6 +3,7 @@
 
 namespace tasker\queue;
 
+use tasker\Console;
 use tasker\exception\RedisException;
 use tasker\traits\Singleton;
 
@@ -33,7 +34,6 @@ class Redis
             }
         } catch (\RedisException $e) {
             throw new RedisException($e->getMessage());
-        } catch (RedisException $e) {
         }
     }
     private function __clone()
