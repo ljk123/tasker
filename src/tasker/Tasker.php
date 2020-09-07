@@ -280,33 +280,40 @@ Use \"--help\" for more information about a command.\n";
      */
     protected static function checkCfg($cfg){
         try {
-            //pcntl 系列函数判断
-            if(!self::functionCheck([
-                'posix_kill',
-                'posix_getpid',
-                'posix_getppid',
-                'posix_setsid',
-            ]))
-            {
-                throw new Exception('posix_* functions has been disabled');
-            }
-            if(!self::functionCheck([
-                'pcntl_signal_dispatch',
-                'pcntl_signal',
-                'pcntl_fork',
-                'pcntl_waitpid',
-            ]))
-            {
-                throw new Exception('pcntl_* functions has been disabled');
-            }
-            if(!is_null($cfg['keep_workering_callback']) && !$cfg['keep_workering_callback'] instanceof \Closure)
-            {
-                throw new Exception('keep_workering_callback is not a closure');
-            }
+            if(php_sapi_name() == "cli") {
+                //cli才检测函数环境
+                //pcntl 系列函数判断
+                if (!self::functionCheck([
+                    'posix_kill',
+                    'posix_getpid',
+                    'posix_getppid',
+                    'posix_setsid',
+                ])) {
+                    throw new Exception('posix_* functions has been disabled');
+                }
+                if (!self::functionCheck([
+                    'pcntl_signal_dispatch',
+                    'pcntl_signal',
+                    'pcntl_fork',
+                    'pcntl_waitpid',
+                ])) {
+                    throw new Exception('pcntl_* functions has been disabled');
+                }
+                if (!is_null($cfg['keep_workering_callback']) && !$cfg['keep_workering_callback'] instanceof \Closure) {
+                    throw new Exception('keep_workering_callback is not a closure');
+                }
 
-            if($cfg['worker_nums']<=0)
-            {
-                throw new Exception('worker_nums value invalid');
+                if ($cfg['worker_nums'] <= 0) {
+                    throw new Exception('worker_nums value invalid');
+                }
+                if(!empty($cfg['hot_update_path']))
+                {
+                    //判断是否支持system
+                    if(!self::functionCheck('system'))
+                    {
+                        throw new Exception('function system has been disabled');
+                    }
+                }
             }
             //检查dababase
             $res=Database::getInstance($cfg['database'])->query("SHOW COLUMNS FROM ".$cfg['database']['table']);
@@ -318,14 +325,6 @@ Use \"--help\" for more information about a command.\n";
 
             //检查redis
             Redis::getInstance($cfg['redis'])->ping();
-            if(!empty($cfg['hot_update_path']))
-            {
-                //判断是否支持system
-                if(!self::functionCheck('system'))
-                {
-                    throw new Exception('function system has been disabled');
-                }
-            }
         }
         catch (\Exception $e)
         {
