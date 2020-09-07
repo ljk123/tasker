@@ -169,7 +169,16 @@ class Worker extends Process
                         if(time()-$last_keep>$this->cfg['keep_workering_ping_interval'])
                         {
                             $last_keep=time();
-                            call_user_func($this->cfg['keep_workering_callback'] );
+                            $class=new ReflectionClass($this->cfg['keep_workering_callback'][0]);
+                            if($class->getMethod($this->cfg['keep_workering_callback'][1])->isStatic())
+                            {
+                                //静态方法调用
+                                $callback=[ $this->cfg['keep_workering_callback'][0],$this->cfg['keep_workering_callback'][1]];
+                            }
+                            else{
+                                $callback=[(new $this->cfg['keep_workering_callback'][0]),$this->cfg['keep_workering_callback'][1]];
+                            }
+                            call_user_func($callback);
                         }
                     }
                 }

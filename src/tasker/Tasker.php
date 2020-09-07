@@ -27,7 +27,10 @@
 namespace tasker;
 
 
+use ReflectionClass;
+use tasker\exception\ClassNotFoundException;
 use tasker\exception\Exception;
+use tasker\exception\RetryException;
 use tasker\process\Master;
 use tasker\queue\Database;
 use tasker\queue\Redis;
@@ -299,8 +302,15 @@ Use \"--help\" for more information about a command.\n";
                 ])) {
                     throw new Exception('pcntl_* functions has been disabled');
                 }
-                if (!is_null($cfg['keep_workering_callback']) && !$cfg['keep_workering_callback'] instanceof \Closure) {
-                    throw new Exception('keep_workering_callback is not a closure');
+                if (!is_null($cfg['keep_workering_callback'])) {
+                    if(!class_exists($cfg['keep_workering_callback'][0]))
+                    {
+                        throw new Exception('keep_workering_callback class is not found');
+                    }
+                    if(!method_exists($cfg['keep_workering_callback'][0],$cfg['keep_workering_callback'][1]) && !method_exists($cfg['keep_workering_callback'][0],'__call'))
+                    {
+                        throw new Exception('keep_workering_callback method is not found');
+                    }
                 }
 
                 if ($cfg['worker_nums'] <= 0) {
