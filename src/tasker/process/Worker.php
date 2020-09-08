@@ -72,8 +72,7 @@ class Worker extends Process
                     if($job['dotimes']>=$cfg['retry_count'] )
                     {
                         $db->exce('update ' .
-                            $cfg['database']['table'] . ' set 
-                            doat=0,startat=0 where id ='.$taster['id']);
+                            $cfg['database']['table'] . ' set startat=0 where id ='.$taster['id']);
                     }
                     else{
                         $payload=json_decode($taster['payload'],true);
