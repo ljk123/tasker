@@ -198,11 +198,12 @@ class Master extends Process
 
     /**
      * 停止所有worker进程.
+     * @param int $signal
      */
-    protected function stopAllWorkers()
+    protected function stopAllWorkers($signal=SIGINT)
     {
         foreach ($this->_workers as $workerPid) {
-            posix_kill($workerPid, SIGINT);
+            posix_kill($workerPid, $signal);
         }
         $timeout=$this->cfg['stop_worker_timeout'];
         $start_time=time();
@@ -322,16 +323,10 @@ class Master extends Process
         if($pid>0)
         {
             //通知子进程保存状态退出
-            foreach ($this->_workers as $workerPid) {
-                posix_kill($workerPid, SIGUSR2);
-            }
+            $this->stopAllWorkers(SIGUSR2);
             //保存主进程状态
             Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_master_status',serialize($this->_status));
-            while (1)
-            {
-                Op::sleep(0.01);
-                pcntl_signal_dispatch();
-            }
+            exit(0);
         }
         elseif ($pid === 0) { // 重启子进程
             //发送结束信号
