@@ -29,18 +29,50 @@ class Database
     private function __clone()
     {
     }
+
     public function query($sql){
-        $PDOStatement = $this->pdo->query($sql);
-        if (false === $PDOStatement) {
-            throw new DatabaseException('sql error:' . $sql);
+        $PDOStatement =   $this->pdo->prepare($sql);
+        if(false === $PDOStatement) {
+            throw new DatabaseException('sql error' ,$sql);
         }
-        return $PDOStatement->fetchAll(PDO::FETCH_ASSOC);
+        try{
+            $result =   $PDOStatement->execute();
+            if ( false === $result ) {
+                throw new DatabaseException('sql execute error' ,$sql);
+            } else {
+                return $PDOStatement->fetchAll(PDO::FETCH_ASSOC);
+            }
+        }catch (\PDOException $e) {
+            $message="pdo exception";
+            if($PDOStatement)
+            {
+                $error = $PDOStatement->errorInfo();
+                $message=$error[1].':'.$error[2];
+            }
+            throw new DatabaseException($message ,$sql);
+        }
     }
     public function exce($sql){
-        if (false === $num=$this->pdo->exec($sql)) {
-            throw new DatabaseException('sql error:' . $sql);
+        $PDOStatement =   $this->pdo->prepare($sql);
+        if(false === $PDOStatement) {
+            throw new DatabaseException('sql error' ,$sql);
         }
-        return $num;
+        try{
+            $result =   $PDOStatement->execute();
+            if ( false === $result) {
+                throw new DatabaseException('sql execute error' ,$sql);
+            } else {
+                return $PDOStatement->rowCount();
+            }
+        }catch (\PDOException $e) {
+            $message="pdo exception";
+            if($PDOStatement)
+            {
+                $error = $PDOStatement->errorInfo();
+                $message=$error[1].':'.$error[2];
+            }
+            throw new DatabaseException($message ,$sql);
+        }
     }
     public function ping(){
         try{

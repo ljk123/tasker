@@ -55,13 +55,12 @@ class Worker extends Process
     public function run(){
         try{
             $this->whileWorking();
+            return;
         }
         catch(\Throwable $e){
-            $except=$e->getMessage();
         }
         catch(\Exception $e)
         {
-            $except=$e->getMessage();
         }
         if(!empty($except))
         {
