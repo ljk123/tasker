@@ -27,11 +27,11 @@ class Tasker_test
             Tasker::push(__CLASS__,'test');
         }
     }
+    //程序自动判断动态静态方法
     public function keep(){
-        Console::log('keep');
+        //保持链接的操作
     }
     public static function skeep(){
-
-        Console::log('skeep');
+        //保持链接的操作
     }
 }

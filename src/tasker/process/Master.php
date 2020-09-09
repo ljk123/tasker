@@ -32,6 +32,14 @@ class Master extends Process
     {
         $redis=Redis::getInstance($this->cfg['redis']);
         $res=$redis->lpop($this->cfg['redis']['queue_key'].'_master_status');
+        if(empty($res))
+        {
+            if(is_file(dirname($this->cfg['pid_path']).'/master_status.tmp'))
+            {
+                $res=file_get_contents(dirname($this->cfg['pid_path']).'/master_status.tmp');
+                @unlink(dirname($this->cfg['pid_path']).'/master_status.tmp');
+            }
+        }
         $load_status=$res?unserialize($res):[];
         if($load_status)
         {
@@ -93,11 +101,12 @@ class Master extends Process
 
     /**
      * 停止.
+     * @param int $signal
      */
-    protected function stop()
+    protected function stop($signal=SIGINT)
     {
         // 主进程给所有子进程发送退出信号
-        $this->stopAllWorkers();
+        $this->stopAllWorkers($signal);
         if (is_file($this->cfg['pid_path'])) {
             @unlink($this->cfg['pid_path']);
         }
@@ -315,18 +324,23 @@ class Master extends Process
         }
     }
     protected function hotUpdate(){
-//        Database::free();
-//        Redis::free();
+        Database::free();
+        Redis::free();
         Console::log('hot update restart start');
         $pid = pcntl_fork();
         // 父进程
         if($pid>0)
         {
-            //通知子进程保存状态退出
-            $this->stopAllWorkers(SIGUSR2);
             //保存主进程状态
-            Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_master_status',serialize($this->_status));
-            exit(0);
+            try{
+                Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_master_status',serialize($this->_status));
+            }catch (\Exception $e)
+            {
+                //保存到文件
+                file_put_contents(dirname($this->cfg['pid_path']).'/master_status.tmp',serialize($this->_status));
+            }
+            //通知子进程保存状态退出
+            $this->stop(SIGUSR2);
         }
         elseif ($pid === 0) { // 重启子进程
             //发送结束信号
