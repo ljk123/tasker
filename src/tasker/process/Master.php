@@ -180,20 +180,7 @@ class Master extends Process
             $this->_workers[$pid] = $pid;
         } else if ($pid === 0) { // 子进程
             // 子进程会阻塞在这里
-            try{
-                (new Worker($this->cfg))->run();
-            }
-            catch(\Throwable $e){
-                $except=$e->getMessage();
-            }
-            catch(\Exception $e)
-            {
-                $except=$e->getMessage();
-            }
-            if(!empty($except))
-            {
-                Console::log("worker exception ".posix_getpid()." : $except" );
-            }
+            (new Worker($this->cfg))->run();
             // 子进程退出
             exit(0);
         } else {

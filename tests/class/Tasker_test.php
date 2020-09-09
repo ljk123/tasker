@@ -22,10 +22,8 @@ class Tasker_test
     public function long_test(){
         Op::sleep(0.1);
         Tasker::push(__CLASS__,'long_test');
-        if(mt_rand(0,2)==1)
-        {
-            Tasker::push(__CLASS__,'test');
-        }
+        Tasker::push(__CLASS__,'test',[],null,true);
+
     }
     //程序自动判断动态静态方法
     public function keep(){

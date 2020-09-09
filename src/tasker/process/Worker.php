@@ -52,8 +52,23 @@ class Worker extends Process
             $this->_status['work_time'] = 0;
         }
     }
-
     public function run(){
+        try{
+            $this->whileWorking();
+        }
+        catch(\Throwable $e){
+            $except=$e->getMessage();
+        }
+        catch(\Exception $e)
+        {
+            $except=$e->getMessage();
+        }
+        if(!empty($except))
+        {
+            $this->saveStatusReload("worker exception ".posix_getpid()." : $except");
+        }
+    }
+    public function whileWorking(){
         while (1) {
             // 捕获信号
             pcntl_signal_dispatch();
