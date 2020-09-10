@@ -26,7 +26,7 @@ class Provider
         /**@var $db Database*/
         $db=Database::getInstance($cfg['database']);
         $result=$db->query('select id,payload,dotimes from ' . $cfg['database']['table'] .
-            ' where doat<' . time() . ' and dotimes<' . $cfg['retry_count'] .
+            ' where doat<=' . time() . ' and dotimes<' . $cfg['retry_count'] .
             ' and startat=0 limit 1000');
         if($result)
         {
