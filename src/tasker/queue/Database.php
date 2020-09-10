@@ -9,6 +9,13 @@ use PDOException;
 use tasker\exception\DatabaseException;
 use tasker\traits\Singleton;
 
+/**
+ * Class Database
+ * @method void beginTransaction
+ * @method void rollBack
+ * @method void commit
+ * @package tasker\queue
+ */
 class Database
 {
     use Singleton;

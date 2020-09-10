@@ -78,7 +78,9 @@ class Worker extends Process
             // 捕获信号
             pcntl_signal_dispatch();
             $cfg=$this->cfg;
+            /**@var $redis Redis|\Redis */
             $redis=Redis::getInstance($cfg['redis']);
+            /**@var $db Database */
             $db=Database::getInstance($cfg['database']);
             $taster=$redis->lpop($cfg['redis']['queue_key']);
             if($taster && $taster=unserialize($taster))
