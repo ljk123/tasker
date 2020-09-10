@@ -138,22 +138,23 @@ class Master extends Process
         foreach ($allWorkerPid as $workerPid) {
             posix_kill($workerPid, SIGUSR1);
         }
-        while(count($this->_workers)>Redis::getInstance($this->cfg['redis'])->lLen($this->cfg['redis']['queue_key'].'_status_data')){
-            Op::sleep(0.1);
-        }
+        Op::sleep(0.3);
         $file_content=serialize(compact(
                 'process_id',
                 'memory',
                 'runtime',
                 'start_time'
             )).PHP_EOL;
-
-        while($data=Redis::getInstance($this->cfg['redis'])->lpop($this->cfg['redis']['queue_key'].'_status_data'))
+        foreach ($allWorkerPid as $workerPid)
         {
-            $file_content.=$data.PHP_EOL;
+            $path='/tmp/worker_status'.$workerPid.'.tmp';
+            if(is_file($path))
+            {
+                $file_content.=file_get_contents($path).PHP_EOL;
+                @unlink($path);
+            }
         }
         file_put_contents('/tmp/status.'.$this->_process_id,$file_content);
-
     }
 
     /**

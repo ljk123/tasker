@@ -27,10 +27,7 @@
 namespace tasker;
 
 
-use ReflectionClass;
-use tasker\exception\ClassNotFoundException;
 use tasker\exception\Exception;
-use tasker\exception\RetryException;
 use tasker\process\Master;
 use tasker\queue\Database;
 use tasker\queue\Redis;

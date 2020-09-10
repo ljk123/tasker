@@ -1,7 +1,6 @@
 <?php
 namespace tests;
 
-use tasker\Console;
 use tasker\exception\Exception;
 use tasker\Op;
 use tasker\Tasker;

@@ -7,7 +7,7 @@ namespace tasker\process;
 use tasker\Console;
 use tasker\exception\ClassNotFoundException;
 use tasker\exception\DatabaseException;
-use tasker\exception\Exception;
+use tasker\exception\RedisException;
 use tasker\Op;
 use tasker\queue\Database;
 use tasker\exception\RetryException;
@@ -39,11 +39,15 @@ class Worker extends Process
         $redis=Redis::getInstance($this->cfg['redis']);
         $res=$redis->lpop($this->cfg['redis']['queue_key'].'_reload_status');
         $load_status=$res?unserialize($res):[];
+        $worker_status_reload_file='/tmp/worker_status_reload.tmp';
         if($load_status)
         {
             $this->_status=$load_status;
+        }elseif(is_file($worker_status_reload_file)){
+            $this->_status=unserialize(file_get_contents($worker_status_reload_file));
+            @unlink($worker_status_reload_file);
         }
-        else {
+        if(empty($this->_status)) {
             $this->_status['start_memory'] = memory_get_usage();
             $this->_status['start_time'] = Op::microtime();
             $this->_status['success_count'] = 0;
@@ -253,7 +257,19 @@ class Worker extends Process
         }
     }
     protected function saveStatusReload($msg){
-        Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_reload_status',serialize($this->_status));
+        try{
+            Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_reload_status',serialize($this->_status));
+        }
+        catch (RedisException $e)
+        {
+            Console::log('worker get status reload redis exception:'.$e->getMessage());
+            //只保存一个算了 锁问题容易死锁
+            $worker_status_reload_file='/tmp/worker_status_reload.tmp';
+            //保存到文件
+            file_put_contents(
+                $worker_status_reload_file,
+                serialize($this->_status));
+        }
         Console::log($msg);
         exit(0);
     }
@@ -292,7 +308,12 @@ class Worker extends Process
                 'agv_speed',
                 'work_time'
             );
-        Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_status_data',serialize($data));
+        //保存到文件
+        file_put_contents(
+            '/tmp/worker_status'.$process_id.'.tmp',
+            serialize($data),
+            FILE_APPEND|LOCK_EX);
+
     }
 
 }
