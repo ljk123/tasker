@@ -6,6 +6,8 @@ namespace tasker\process;
 
 use tasker\Console;
 use tasker\exception\ClassNotFoundException;
+use tasker\exception\DatabaseException;
+use tasker\exception\Exception;
 use tasker\Op;
 use tasker\queue\Database;
 use tasker\exception\RetryException;
@@ -57,14 +59,18 @@ class Worker extends Process
             $this->whileWorking();
             return;
         }
+        catch (DatabaseException $e)
+        {
+            Console::log($e->getMessage().'['.$e->getSql().']');
+        }
         catch(\Throwable $e){
         }
         catch(\Exception $e)
         {
         }
-        if(!empty($except))
+        if(!empty($e))
         {
-            $this->saveStatusReload("worker exception ".posix_getpid()." : $except");
+            $this->saveStatusReload("worker exception ".posix_getpid()." : ".$e->getMessage());
         }
     }
     public function whileWorking(){
