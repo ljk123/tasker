@@ -3,7 +3,6 @@
 
 namespace tasker\queue;
 
-use tasker\Console;
 use tasker\exception\RedisException;
 use tasker\traits\Singleton;
 

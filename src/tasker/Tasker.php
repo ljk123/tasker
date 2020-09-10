@@ -416,10 +416,10 @@ Use \"--help\" for more information about a command.\n";
         $doat=$doat?:time();
         if(!$is_repeat)
         {
-            $sql='SELECT count(1) counts FROM '.$cfg['database']['table'].
-                ' WHERE payload="'.addslashes(json_encode($payload)).'" and startat=0 and dotimes<10';
+            $sql='SELECT id FROM '.$cfg['database']['table'].
+                ' WHERE payload="'.addslashes(json_encode($payload)).'" and startat=0 and dotimes<10 limit 1';
             $res=Database::getInstance(self::$cfg['database'])->query($sql);
-            if($res[0]['counts']>0)
+            if(!empty($res))
             {
                 return;
             }

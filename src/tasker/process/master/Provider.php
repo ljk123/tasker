@@ -4,6 +4,7 @@
 namespace tasker\process\master;
 
 
+use PDO;
 use tasker\exception\DatabaseException;
 use tasker\queue\Database;
 use tasker\queue\Redis;
@@ -17,16 +18,16 @@ class Provider
      */
     public static function moveToList($cfg){
         //从database移到redis
-        /**@var $redis Redis*/
+        /**@var $redis \Redis | Redis */
         $redis=Redis::getInstance($cfg['redis']);
         if($redis->lLen($cfg['redis']['queue_key'])>1000)
         {
             return;
         }
-        /**@var $db Database*/
+        /**@var $db PDO | Database*/
         $db=Database::getInstance($cfg['database']);
         $result=$db->query('select id,payload,dotimes from ' . $cfg['database']['table'] .
-            ' where doat<=' . time() . ' and dotimes<' . $cfg['retry_count'] .
+            ' where doat<' . time() . ' and dotimes<' . $cfg['retry_count'] .
             ' and startat=0 limit 1000');
         if($result)
         {
