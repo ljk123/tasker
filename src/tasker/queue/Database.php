@@ -21,6 +21,12 @@ class Database
     use Singleton;
     /**@var PDO */
     protected $pdo;
+
+    /**
+     * Database constructor.
+     * @param $cfg
+     * @throws DatabaseException
+     */
     private function __construct($cfg)
     {
         try{
@@ -37,6 +43,11 @@ class Database
     {
     }
 
+    /**
+     * @param $sql
+     * @return array
+     * @throws DatabaseException
+     */
     public function query($sql){
         $PDOStatement =   $this->pdo->prepare($sql);
         if(false === $PDOStatement) {
@@ -59,6 +70,12 @@ class Database
             throw new DatabaseException($message ,$sql);
         }
     }
+
+    /**
+     * @param string $sql
+     * @return int
+     * @throws DatabaseException
+     */
     public function exce($sql){
         $PDOStatement =   $this->pdo->prepare($sql);
         if(false === $PDOStatement) {
@@ -71,7 +88,7 @@ class Database
             } else {
                 return $PDOStatement->rowCount();
             }
-        }catch (\PDOException $e) {
+        }catch (PDOException $e) {
             $message="pdo exception";
             if($PDOStatement)
             {
@@ -81,6 +98,10 @@ class Database
             throw new DatabaseException($message ,$sql);
         }
     }
+
+    /**
+     * @return bool
+     */
     public function ping(){
         try{
             $this->pdo->getAttribute(PDO::ATTR_SERVER_INFO);
@@ -91,8 +112,19 @@ class Database
         }
         return true;
     }
+
+    /**
+     * @param $method
+     * @param $arguments
+     * @return mixed
+     * @throws DatabaseException
+     */
     public function __call($method, $arguments)
     {
-        return call_user_func([$this->pdo,$method],...$arguments);
+        try{
+            return call_user_func([$this->pdo,$method],...$arguments);
+        } catch (PDOException $e) {
+            throw new DatabaseException($e->getMessage());
+        }
     }
 }

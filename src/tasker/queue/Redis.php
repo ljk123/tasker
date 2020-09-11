@@ -15,6 +15,12 @@ class Redis
     use Singleton;
     /**@var \Redis*/
     protected $redis;
+
+    /**
+     * Redis constructor.
+     * @param $cfg
+     * @throws RedisException
+     */
     private function __construct($cfg)
     {
         //连接数据库，选择数据库
@@ -38,7 +44,18 @@ class Redis
     private function __clone()
     {
     }
+
+    /**
+     * @param string $method
+     * @param array $arguments
+     * @return mixed
+     * @throws RedisException
+     */
     public function __call($method,$arguments){
-        return call_user_func([$this->redis,$method],...$arguments);
+        try{
+            return call_user_func([$this->redis,$method],...$arguments);
+        } catch (\RedisException $e) {
+            throw new RedisException($e->getMessage());
+        }
     }
 }
