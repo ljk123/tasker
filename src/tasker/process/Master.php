@@ -135,23 +135,31 @@ class Master extends Process
         //运行了多少时间
         $runtime=Op::dtime(Op::microtime()-$this->_status['start_time']);
         $allWorkerPid = $this->_workers;
+        $unstatused=[];
         foreach ($allWorkerPid as $workerPid) {
             posix_kill($workerPid, SIGUSR1);
+            $unstatused[$workerPid]=$workerPid;
         }
-        Op::sleep(0.3);
         $file_content=serialize(compact(
                 'process_id',
                 'memory',
                 'runtime',
                 'start_time'
             )).PHP_EOL;
-        foreach ($allWorkerPid as $workerPid)
+        $timeout=2;
+        $s_time=time();
+        while(!empty($unstatused) && time()-$s_time<$timeout)
         {
-            $path='/tmp/worker_status'.$workerPid.'.tmp';
-            if(is_file($path))
+            foreach ($allWorkerPid as $workerPid)
             {
-                $file_content.=file_get_contents($path).PHP_EOL;
-                @unlink($path);
+                $path='/tmp/worker_status'.$workerPid.'.tmp';
+                if(is_file($path))
+                {
+                    Op::sleep(0.01);
+                    $file_content.=file_get_contents($path).PHP_EOL;
+                    @unlink($path);
+                    unset($unstatused[$workerPid]);
+                }
             }
         }
         file_put_contents('/tmp/status.'.$this->_process_id,$file_content);
