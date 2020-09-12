@@ -2,11 +2,11 @@
 
 ------
 ## 获取代码
-###git获取
+### git获取
 
 >git clone git@github.com:ljk123/tasker.git
 
-###composer获取
+### composer获取
 >todo
 
  
