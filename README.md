@@ -10,18 +10,24 @@
 >todo
 
  
-## 运行：
+## 运行
+
 ### 代码
+
 ~~~
 use tasker\Tasker;
 Tasker::run()
 ~~~
+
 ###启动
+
 ~~~
  php /yourpayh/start.php start
 ~~~
 ![启动成功](doc/images/started.png)
+
 ####其他命令
+
 ~~~
 Usage: Commands
 Commands:
@@ -40,6 +46,7 @@ Use "--help" for more information about a command.
 ~~~
 
 ##配置
+
 ~~~
  [
     'worker_nums'=>2,//开启worker进程数量
@@ -93,6 +100,7 @@ Use "--help" for more information about a command.
 >~~~
 
 ###发布任务
+
 >发布任务时也需要进行配置，主要配置数据库部分
 >~~~
 >Tasker::cfg([
@@ -116,7 +124,9 @@ Use "--help" for more information about a command.
 >Tasker::push(\tests\Tasker_test::class,'test');//发布任务
 >~~~
 >
+>
 ###任务类说明
+
 >```
 >任务类跟普通类没有区别，方法可为静态可为动态，程序自动判断调用
 >传参方式为call_user_function($callback,...$param)
