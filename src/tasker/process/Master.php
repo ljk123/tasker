@@ -270,7 +270,14 @@ class Master extends Process
         }
 
         global $argv,$STDOUT, $STDERR;
-        $stdout_path=is_null($this->cfg['stdout_path'])?
+
+        fclose(STDOUT);
+        fclose(STDERR);
+        if(is_null($this->cfg['stdout_path']))
+        {
+            return;
+        }
+        $stdout_path=empty($this->cfg['stdout_path'])?
             dirname(realpath($argv[0])).'/tasker.log':
             $this->cfg['stdout_path'];
         $handle = fopen($stdout_path, "a");
@@ -279,8 +286,6 @@ class Master extends Process
             set_error_handler(function(){});
             fclose($STDOUT);
             fclose($STDERR);
-            fclose(STDOUT);
-            fclose(STDERR);
             $STDOUT = fopen($stdout_path, "a");
             $STDERR = fopen($stdout_path, "a");
             restore_error_handler();

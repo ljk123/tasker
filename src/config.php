@@ -2,7 +2,7 @@
 return [
     'worker_nums'=>2,
     'pid_path'=>'/var/run/fxf_task.pid',
-    'stdout_path'=>null,
+    'stdout_path'=>'',
     'master_title'=>'task_master_process',
     'worker_title'=>'task_worker_process',
     'tasker_user'=>'www',

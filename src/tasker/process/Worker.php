@@ -161,7 +161,8 @@ class Worker extends Process
                         }
                         else{
                             //记录异常
-                            $db->exce('update ' . $cfg['database']['table'] . ' set startat=0,dotimes=99, exception="' . addslashes($e->getMessage()) . '" where id=' . $taster['id']);
+                            $exception=$e->getMessage().' at '.$e->getFile().':'.$e->getLine();
+                            $db->exce('update ' . $cfg['database']['table'] . ' set startat=0,dotimes=99, exception="' . addslashes($exception) . '" where id=' . $taster['id']);
                             $this->_status['except_count']++;
                         }
                         unset($e);
