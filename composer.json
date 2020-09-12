@@ -1,6 +1,9 @@
 {
     "name": "ljk123/tasker",
     "type": "library",
+    "description": "php消息队列",
+    "keywords": ["消息队列","守护队列","异步任务"],
+    "version": "v1.0.0",
     "license": "MIT",
     "minimum-stability": "dev",
     "require": {
