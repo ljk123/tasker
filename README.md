@@ -7,7 +7,7 @@
 >git clone git@github.com:ljk123/tasker.git
 
 ### composer获取
->todo
+>composer require ljk123/tasker
 
  
 ## 运行
