@@ -1,8 +1,5 @@
 <?php
-
-
 namespace tasker\process;
-
 
 use tasker\Console;
 use tasker\exception\ClassNotFoundException;
