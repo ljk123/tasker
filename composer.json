@@ -1,6 +1,6 @@
 {
     "name": "ljk123/tasker",
-    "type": "project",
+    "type": "library",
     "license": "MIT",
     "minimum-stability": "dev",
     "require": {
