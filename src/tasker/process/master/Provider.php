@@ -6,6 +6,7 @@ namespace tasker\process\master;
 
 use PDO;
 use tasker\exception\DatabaseException;
+use tasker\Op;
 use tasker\queue\Database;
 use tasker\queue\Redis;
 
@@ -20,7 +21,7 @@ class Provider
         //从database移到redis
         /**@var $redis \Redis | Redis */
         $redis=Redis::getInstance($cfg['redis']);
-        if($redis->lLen($cfg['redis']['queue_key'])>1000)
+        if($redis->lLen($cfg['redis']['queue_key'])>$cfg['worker_nums']*10)
         {
             return;
         }
@@ -28,7 +29,7 @@ class Provider
         $db=Database::getInstance($cfg['database']);
         $result=$db->query('select id,payload,dotimes from ' . $cfg['database']['table'] .
             ' where doat<' . time() . ' and dotimes<' . $cfg['retry_count'] .
-            ' and startat=0 limit 1000');
+            ' and startat=0 limit '.($cfg['worker_nums']*2));
         if($result)
         {
             $ids=array_column($result,'id');
