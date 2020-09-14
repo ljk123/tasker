@@ -202,7 +202,13 @@ class Worker extends Process
                             else{
                                 $callback=[(new $this->cfg['keep_workering_callback'][0]),$this->cfg['keep_workering_callback'][1]];
                             }
-                            call_user_func($callback);
+                            try {
+                                call_user_func($callback);
+                            }
+                            catch (\Exception $e)
+                            {
+                                Console::log("keep function ".$e->getMessage()." of :".$this->cfg['keep_workering_callback'][0].":".$this->cfg['keep_workering_callback'][1]);
+                            }
                         }
                     }
                 }
