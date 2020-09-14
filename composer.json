@@ -3,7 +3,6 @@
     "type": "library",
     "description": "php消息队列",
     "keywords": ["消息队列","守护队列","异步任务"],
-    "version": "1.0",
     "license": "MIT",
     "minimum-stability": "dev",
     "require": {
