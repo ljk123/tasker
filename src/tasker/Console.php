@@ -3,15 +3,17 @@
 
 namespace tasker;
 
-class Console{
+class Console
+{
     /**
      * 输出头部信息
      **/
-    public static function header(){
-        $text=self::logo().PHP_EOL;
-        $text.= "----------------------tasker----------------------".PHP_EOL;
-        $text.= 'tasker version:' . Tasker::VERSION . "      PHP version:".PHP_VERSION.PHP_EOL;
-        self::display($text,false);
+    public static function header()
+    {
+        $text = self::logo() . PHP_EOL;
+        $text .= "----------------------tasker----------------------" . PHP_EOL;
+        $text .= 'tasker version:' . Tasker::VERSION . "      PHP version:" . PHP_VERSION . PHP_EOL;
+        self::display($text, false);
     }
 
     /**
@@ -19,14 +21,18 @@ class Console{
      * @param string $text 内容
      * @param bool $isClose 输出后是否退出
      */
-    public static function display($text,$isClose=true){
-        echo $text.PHP_EOL;
-        $isClose==true && die;
+    public static function display($text, $isClose = true)
+    {
+        echo $text . PHP_EOL;
+        $isClose == true && die;
     }
-    public static function log($msg,$isClose=false){
-        $text=date('[Y-m-d H:i:s]').$msg;
-        self::display($text,$isClose);
+
+    public static function log($msg, $isClose = false)
+    {
+        $text = date('[Y-m-d H:i:s]') . $msg;
+        self::display($text, $isClose);
     }
+
     public static function color($text, $status)
     {
         switch ($status) {
@@ -51,7 +57,9 @@ class Console{
         }
         return chr(27) . "$out" . "$text" . chr(27) . "[0m";
     }
-    private static function logo(){
+
+    private static function logo()
+    {
         return <<<logo
 
 ████████╗ █████╗ ███████╗██╗  ██╗███████╗██████╗ 

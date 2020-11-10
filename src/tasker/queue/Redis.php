@@ -13,7 +13,7 @@ use tasker\traits\Singleton;
 class Redis
 {
     use Singleton;
-    /**@var \Redis*/
+    /**@var \Redis */
     protected $redis;
 
     /**
@@ -26,8 +26,7 @@ class Redis
         //连接数据库，选择数据库
         $this->redis = new \Redis();
         $this->redis->connect($cfg['host'], $cfg['port'], $cfg['timeout']);
-        if(!empty($cfg['pwd']))
-        {
+        if (!empty($cfg['pwd'])) {
             $this->redis->auth($cfg['pwd']);
         }
         if (0 != $cfg['db']) {
@@ -41,6 +40,7 @@ class Redis
             throw new RedisException($e->getMessage());
         }
     }
+
     private function __clone()
     {
     }
@@ -51,9 +51,10 @@ class Redis
      * @return mixed
      * @throws RedisException
      */
-    public function __call($method,$arguments){
-        try{
-            return call_user_func([$this->redis,$method],...$arguments);
+    public function __call($method, $arguments)
+    {
+        try {
+            return call_user_func([$this->redis, $method], ...$arguments);
         } catch (\RedisException $e) {
             throw new RedisException($e->getMessage());
         }

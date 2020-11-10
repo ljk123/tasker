@@ -11,9 +11,6 @@ use tasker\traits\Singleton;
 
 /**
  * Class Database
- * @method void beginTransaction
- * @method void rollBack
- * @method void commit
  * @package tasker\queue
  */
 class Database
@@ -29,16 +26,17 @@ class Database
      */
     private function __construct($cfg)
     {
-        try{
+        try {
             //连接数据库，选择数据库
-            $pdo = new PDO("mysql:host=".$cfg['host'].":".$cfg['port'].";dbname=".$cfg['db'].";charset=".$cfg['charset'],$cfg['user'],$cfg['pwd']);
-        } catch (PDOException $e){
+            $pdo = new PDO("mysql:host=" . $cfg['host'] . ":" . $cfg['port'] . ";dbname=" . $cfg['db'] . ";charset=" . $cfg['charset'], $cfg['user'], $cfg['pwd']);
+        } catch (PDOException $e) {
             //输出异常信息
-            throw new DatabaseException('fail to connect db:'.$e->getMessage());
+            throw new DatabaseException('fail to connect db:' . $e->getMessage());
         }
 
-        $this->pdo=$pdo;
+        $this->pdo = $pdo;
     }
+
     private function __clone()
     {
     }
@@ -48,26 +46,26 @@ class Database
      * @return array
      * @throws DatabaseException
      */
-    public function query($sql){
-        $PDOStatement =   $this->pdo->prepare($sql);
-        if(false === $PDOStatement) {
-            throw new DatabaseException('sql error' ,$sql);
+    public function query($sql)
+    {
+        $PDOStatement = $this->pdo->prepare($sql);
+        if (false === $PDOStatement) {
+            throw new DatabaseException('sql error', $sql);
         }
-        try{
-            $result =   $PDOStatement->execute();
-            if ( false === $result ) {
-                throw new DatabaseException('sql execute error' ,$sql);
+        try {
+            $result = $PDOStatement->execute();
+            if (false === $result) {
+                throw new DatabaseException('sql execute error errorCode:' . $PDOStatement->errorCode() . ' errMsg' . join('_', $PDOStatement->errorInfo()) . ' sql:' . $sql, $sql);
             } else {
                 return $PDOStatement->fetchAll(PDO::FETCH_ASSOC);
             }
-        }catch (\PDOException $e) {
-            $message="pdo exception";
-            if($PDOStatement)
-            {
+        } catch (\PDOException $e) {
+            $message = "pdo exception";
+            if ($PDOStatement) {
                 $error = $PDOStatement->errorInfo();
-                $message=$error[1].':'.$error[2];
+                $message = $error[1] . ':' . $error[2];
             }
-            throw new DatabaseException($message ,$sql);
+            throw new DatabaseException($message, $sql);
         }
     }
 
@@ -76,37 +74,38 @@ class Database
      * @return int
      * @throws DatabaseException
      */
-    public function exce($sql){
-        $PDOStatement =   $this->pdo->prepare($sql);
-        if(false === $PDOStatement) {
-            throw new DatabaseException('sql error' ,$sql);
+    public function exce($sql)
+    {
+        $PDOStatement = $this->pdo->prepare($sql);
+        if (false === $PDOStatement) {
+            throw new DatabaseException('sql error', $sql);
         }
-        try{
-            $result =   $PDOStatement->execute();
-            if ( false === $result) {
-                throw new DatabaseException('sql execute error' ,$sql);
+        try {
+            $result = $PDOStatement->execute();
+            if (false === $result) {
+                throw new DatabaseException('sql execute error', $sql);
             } else {
                 return $PDOStatement->rowCount();
             }
-        }catch (PDOException $e) {
-            $message="pdo exception";
-            if($PDOStatement)
-            {
+        } catch (PDOException $e) {
+            $message = "pdo exception";
+            if ($PDOStatement) {
                 $error = $PDOStatement->errorInfo();
-                $message=$error[1].':'.$error[2];
+                $message = $error[1] . ':' . $error[2];
             }
-            throw new DatabaseException($message ,$sql);
+            throw new DatabaseException($message, $sql);
         }
     }
 
     /**
      * @return bool
      */
-    public function ping(){
-        try{
+    public function ping()
+    {
+        try {
             $this->pdo->getAttribute(PDO::ATTR_SERVER_INFO);
         } catch (PDOException $e) {
-            if(strpos($e->getMessage(), 'MySQL server has gone away')!==false){
+            if (strpos($e->getMessage(), 'MySQL server has gone away') !== false) {
                 return false;
             }
         }
@@ -121,8 +120,8 @@ class Database
      */
     public function __call($method, $arguments)
     {
-        try{
-            return call_user_func([$this->pdo,$method],...$arguments);
+        try {
+            return call_user_func([$this->pdo, $method], ...$arguments);
         } catch (PDOException $e) {
             throw new DatabaseException($e->getMessage());
         }

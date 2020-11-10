@@ -1,27 +1,27 @@
 <?php
 /**
-\\ \\ \\ \\ \\ \\ \\ \\ || || || || || || // // // // // // // //
-\\ \\ \\ \\ \\ \\ \\        _ooOoo_          // // // // // // //
-\\ \\ \\ \\ \\ \\          o8888888o            // // // // // //
-\\ \\ \\ \\ \\             88" . "88               // // // // //
-\\ \\ \\ \\                (| -_- |)                  // // // //
-\\ \\ \\                   O\  =  /O                     // // //
-\\ \\                   ____/`---'\____                     // //
-\\                    .'  \\|     |//  `.                      //
-==                   /  \\|||  :  |||//  \                     ==
-==                  /  _||||| -:- |||||-  \                    ==
-==                  |   | \\\  -  /// |   |                    ==
-==                  | \_|  ''\---/''  |   |                    ==
-==                  \  .-\__  `-`  ___/-. /                    ==
-==                ___`. .'  /--.--\  `. . ___                  ==
-==              ."" '<  `.___\_<|>_/___.'  >'"".               ==
-==            | | :  `- \`.;`\ _ /`;.`/ - ` : | |              \\
-//            \  \ `-.   \_ __\ /__ _/   .-` /  /              \\
-//      ========`-.____`-.___\_____/___.-`____.-'========      \\
-//                           `=---='                           \\
-// //   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  \\ \\
-// // //      佛祖保佑      永无BUG      永不修改        \\ \\ \\
-// // // // // // || || || || || || || || || || \\ \\ \\ \\ \\ \\
+ * \\ \\ \\ \\ \\ \\ \\ \\ || || || || || || // // // // // // // //
+ * \\ \\ \\ \\ \\ \\ \\        _ooOoo_          // // // // // // //
+ * \\ \\ \\ \\ \\ \\          o8888888o            // // // // // //
+ * \\ \\ \\ \\ \\             88" . "88               // // // // //
+ * \\ \\ \\ \\                (| -_- |)                  // // // //
+ * \\ \\ \\                   O\  =  /O                     // // //
+ * \\ \\                   ____/`---'\____                     // //
+ * \\                    .'  \\|     |//  `.                      //
+ * ==                   /  \\|||  :  |||//  \                     ==
+ * ==                  /  _||||| -:- |||||-  \                    ==
+ * ==                  |   | \\\  -  /// |   |                    ==
+ * ==                  | \_|  ''\---/''  |   |                    ==
+ * ==                  \  .-\__  `-`  ___/-. /                    ==
+ * ==                ___`. .'  /--.--\  `. . ___                  ==
+ * ==              ."" '<  `.___\_<|>_/___.'  >'"".               ==
+ * ==            | | :  `- \`.;`\ _ /`;.`/ - ` : | |              \\
+ * //            \  \ `-.   \_ __\ /__ _/   .-` /  /              \\
+ * //      ========`-.____`-.___\_____/___.-`____.-'========      \\
+ * //                           `=---='                           \\
+ * // //   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  \\ \\
+ * // // //      佛祖保佑      永无BUG      永不修改        \\ \\ \\
+ * // // // // // // || || || || || || || || || || \\ \\ \\ \\ \\ \\
  */
 
 namespace tasker;
@@ -34,9 +34,9 @@ use tasker\queue\Redis;
 
 class Tasker
 {
-    const VERSION='1.0.0';
-    const IS_DEBUG=false;
-    protected static $is_cli=false;
+    const VERSION = '1.0.0';
+    const IS_DEBUG = false;
+    protected static $is_cli = false;
 
     /**
      * 守护态运行.
@@ -47,8 +47,7 @@ class Tasker
         if (-1 === $pid) {
             Console::display('process fork fail');
         } elseif ($pid > 0) {
-            if(!in_array('-no_header',$options))
-            {
+            if (!in_array('-no_header', $options)) {
                 Console::header();
             }
             exit(0);
@@ -76,7 +75,7 @@ class Tasker
      */
     protected static function parseCmd($cfg)
     {
-        global $argv,$argc;
+        global $argv, $argc;
         $usage = "
 Usage: Commands 
 Commands:\n
@@ -91,21 +90,18 @@ status\t\tWorker status.
 \t\t-m count info
 
 Use \"--help\" for more information about a command.\n";
-        $i=1;
-        $options=[];
-        while($command = $argv[$argc-$i])
-        {
-            if(substr($command,0,1)!=='-')
-            {
+        $i = 1;
+        $options = [];
+        while ($command = $argv[$argc - $i]) {
+            if (substr($command, 0, 1) !== '-') {
                 break;
             }
-            $options[]=$command;
+            $options[] = $command;
             $i++;
         }
 
 
-        if($argc<2 || in_array('--help',$argv) || empty($command))
-        {
+        if ($argc < 2 || in_array('--help', $argv) || empty($command)) {
             Console::header();
             Console::display($usage);
         }
@@ -113,10 +109,10 @@ Use \"--help\" for more information about a command.\n";
 
         // 获取master的pid和存活状态
         $masterPid = is_file($cfg['pid_path']) ? file_get_contents($cfg['pid_path']) : 0;
-        $masterAlive = $masterPid ? posix_kill($masterPid,0) : false;
+        $masterAlive = $masterPid ? posix_kill($masterPid, 0) : false;
         if ($masterAlive) {
             if ($command === 'start') {
-                Console::display('Tasker already running at '.$masterPid);
+                Console::display('Tasker already running at ' . $masterPid);
             }
         } else {
             if ($command && $command !== 'start') {
@@ -128,44 +124,42 @@ Use \"--help\" for more information about a command.\n";
                 break;
             case 'stop':
             case 'restart':
-                Console::display('Tasker stopping ...',false);
+                Console::display('Tasker stopping ...', false);
                 // 给master发送stop信号
                 posix_kill($masterPid, SIGINT);
 
-                $timeout = $cfg['stop_worker_timeout']+3;
+                $timeout = $cfg['stop_worker_timeout'] + 3;
                 $startTime = time();
-                while (posix_kill($masterPid,0)) {
+                while (posix_kill($masterPid, 0)) {
                     usleep(1000);
                     if (time() - $startTime >= $timeout) {
                         Console::display('Task stop fail');
                     }
                 }
-                Console::display('Tasker stop success',$command==='stop');
+                Console::display('Tasker stop success', $command === 'stop');
                 break;
             case 'reload':
-                Console::display('Tasker reloading ...',false);
+                Console::display('Tasker reloading ...', false);
                 // 给master发送reload信号
                 posix_kill($masterPid, SIGUSR1);
-                $path=dirname($cfg['pid_path']).'/reload.'.$masterPid;
-                while (!is_file($path))
-                {
+                $path = dirname($cfg['pid_path']) . '/reload.' . $masterPid;
+                while (!is_file($path)) {
                     usleep(100);
                 }
                 @unlink($path);
-                Console::display("Tasker reload success",false);
+                Console::display("Tasker reload success", false);
                 exit(0);
 
             case 'status':
                 posix_kill($masterPid, SIGUSR2);
-                $path='/tmp/status.'.$masterPid;
-                while (!is_file($path))
-                {
+                $path = '/tmp/status.' . $masterPid;
+                while (!is_file($path)) {
                     Op::sleep(0.001);
                 }
-                Op::sleep(0.1*$cfg['worker_nums']);
-                $status_content=file_get_contents($path);
+                Op::sleep(0.1 * $cfg['worker_nums']);
+                $status_content = file_get_contents($path);
                 @unlink($path);
-                self::displayStatus($status_content,$masterPid,$options);
+                self::displayStatus($status_content, $masterPid, $options);
 
                 exit(0);
 
@@ -180,67 +174,57 @@ Use \"--help\" for more information about a command.\n";
      * @param $status_content
      * @param $masterPid
      */
-    protected static function displayStatus($status_content,$masterPid,$options){
-        $status_array=explode(PHP_EOL,$status_content);
-        $master_status=[];
-        $worker_status=[];
-        foreach ($status_array as $index=>$status) {
-            if($status)
-            {
-                $decode=unserialize($status);
-                if($decode['process_id']==$masterPid)
-                {
-                    $master_status=$decode;
-                }
-                else{
-                    $worker_status[]=$decode;
+    protected static function displayStatus($status_content, $masterPid, $options)
+    {
+        $status_array = explode(PHP_EOL, $status_content);
+        $master_status = [];
+        $worker_status = [];
+        foreach ($status_array as $index => $status) {
+            if ($status) {
+                $decode = unserialize($status);
+                if ($decode['process_id'] == $masterPid) {
+                    $master_status = $decode;
+                } else {
+                    $worker_status[] = $decode;
                 }
             }
         }
         Console::header();
-        $master_text="--------------------master info-------------------".PHP_EOL;
-        $master_text.="start_time:\t".$master_status['start_time'].PHP_EOL;
-        $master_text.="memory:\t\t".$master_status['memory'].PHP_EOL;
-        Console::display($master_text,false);
-        $worker_text="";
-        if(empty($options) || in_array('-s',$options))
-        {
-            $worker_text.="---------------------speed info-------------------".PHP_EOL;
-            $worker_text.="pid\tfast_speed\tslow_speed\tagv_speed".PHP_EOL;
-            foreach ($worker_status as $v)
-            {
-                $worker_text.=$v['process_id']."\t".$v['fast_speed']."\t\t".$v['slow_speed']."\t\t".$v['agv_speed']."".PHP_EOL;
+        $master_text = "--------------------master info-------------------" . PHP_EOL;
+        $master_text .= "start_time:\t" . $master_status['start_time'] . PHP_EOL;
+        $master_text .= "memory:\t\t" . $master_status['memory'] . PHP_EOL;
+        Console::display($master_text, false);
+        $worker_text = "";
+        if (empty($options) || in_array('-s', $options)) {
+            $worker_text .= "---------------------speed info-------------------" . PHP_EOL;
+            $worker_text .= "pid\tfast_speed\tslow_speed\tagv_speed" . PHP_EOL;
+            foreach ($worker_status as $v) {
+                $worker_text .= $v['process_id'] . "\t" . $v['fast_speed'] . "\t\t" . $v['slow_speed'] . "\t\t" . $v['agv_speed'] . "" . PHP_EOL;
             }
         }
-        if(empty($options) || in_array('-t',$options))
-        {
-            $worker_text.="---------------------time info--------------------".PHP_EOL;
-            $worker_text.="pid\truntime\t\tsleep_time\twork_time".PHP_EOL;
-            foreach ($worker_status as $v)
-            {
-                $worker_text.=$v['process_id']."\t".$v['runtime']."\t".$v['sleep_time']."\t".$v['work_time']."".PHP_EOL;
+        if (empty($options) || in_array('-t', $options)) {
+            $worker_text .= "---------------------time info--------------------" . PHP_EOL;
+            $worker_text .= "pid\truntime\t\tsleep_time\twork_time" . PHP_EOL;
+            foreach ($worker_status as $v) {
+                $worker_text .= $v['process_id'] . "\t" . $v['runtime'] . "\t" . $v['sleep_time'] . "\t" . $v['work_time'] . "" . PHP_EOL;
             }
         }
-        if(empty($options) || in_array('-c',$options))
-        {
-            $worker_text.="---------------------count info-------------------".PHP_EOL;
-            $worker_text.="pid\tsuccess_count\tfail_count\texcept_count".PHP_EOL;
-            foreach ($worker_status as $v)
-            {
-                $worker_text.=$v['process_id']."\t".Console::color($v['success_count'],'SUCCESS')."\t\t".Console::color($v['fail_count'],$v['fail_count']>0?'Yellow':'')."\t\t".Console::color($v['except_count'],$v['except_count']>0?'Red':'')."".PHP_EOL;
+        if (empty($options) || in_array('-c', $options)) {
+            $worker_text .= "---------------------count info-------------------" . PHP_EOL;
+            $worker_text .= "pid\tsuccess_count\tfail_count\texcept_count" . PHP_EOL;
+            foreach ($worker_status as $v) {
+                $worker_text .= $v['process_id'] . "\t" . Console::color($v['success_count'], 'SUCCESS') . "\t\t" . Console::color($v['fail_count'], $v['fail_count'] > 0 ? 'Yellow' : '') . "\t\t" . Console::color($v['except_count'], $v['except_count'] > 0 ? 'Red' : '') . "" . PHP_EOL;
             }
         }
-        if(empty($options) || in_array('-m',$options))
-        {
-            $worker_text.="--------------------memory info-------------------".PHP_EOL;
-            $worker_text.="pid\tmemory".PHP_EOL;
-            foreach ($worker_status as $v)
-            {
-                $worker_text.=$v['process_id']."\t".$v['memory']."".PHP_EOL;
+        if (empty($options) || in_array('-m', $options)) {
+            $worker_text .= "--------------------memory info-------------------" . PHP_EOL;
+            $worker_text .= "pid\tmemory" . PHP_EOL;
+            foreach ($worker_status as $v) {
+                $worker_text .= $v['process_id'] . "\t" . $v['memory'] . "" . PHP_EOL;
             }
         }
 
-        Console::display($worker_text,false);
+        Console::display($worker_text, false);
     }
 
     /**
@@ -254,21 +238,20 @@ Use \"--help\" for more information about a command.\n";
         if (php_sapi_name() != "cli") {
             throw new Exception('Task only run in command line mode');
         }
-        self::$is_cli=true;
-        
+        self::$is_cli = true;
+
     }
 
-    protected static function parseCfg(&$cfg){
-        $task_cfg=require dirname(__FILE__).'/../config.php';
-        $cfg_key=array_keys($task_cfg);
-        foreach ($cfg_key as $key)
-        {
-            if(!empty($cfg[$key]))
-            {
-                $task_cfg[$key]=$cfg[$key];
+    protected static function parseCfg(&$cfg)
+    {
+        $task_cfg = require dirname(__FILE__) . '/../config.php';
+        $cfg_key = array_keys($task_cfg);
+        foreach ($cfg_key as $key) {
+            if (!empty($cfg[$key])) {
+                $task_cfg[$key] = $cfg[$key];
             }
         }
-        $cfg=$task_cfg;
+        $cfg = $task_cfg;
     }
 
     /**
@@ -278,9 +261,10 @@ Use \"--help\" for more information about a command.\n";
      * @throws Exception
      * @throws \Exception
      */
-    protected static function checkCfg($cfg){
+    protected static function checkCfg($cfg)
+    {
         try {
-            if(php_sapi_name() == "cli") {
+            if (php_sapi_name() == "cli") {
                 //cli才检测函数环境
                 //pcntl 系列函数判断
                 if (!self::functionCheck([
@@ -300,12 +284,10 @@ Use \"--help\" for more information about a command.\n";
                     throw new Exception('pcntl_* functions has been disabled');
                 }
                 if (!is_null($cfg['keep_workering_callback'])) {
-                    if(!class_exists($cfg['keep_workering_callback'][0]))
-                    {
+                    if (!class_exists($cfg['keep_workering_callback'][0])) {
                         throw new Exception('keep_workering_callback class is not found');
                     }
-                    if(!method_exists($cfg['keep_workering_callback'][0],$cfg['keep_workering_callback'][1]) && !method_exists($cfg['keep_workering_callback'][0],'__call'))
-                    {
+                    if (!method_exists($cfg['keep_workering_callback'][0], $cfg['keep_workering_callback'][1]) && !method_exists($cfg['keep_workering_callback'][0], '__call')) {
                         throw new Exception('keep_workering_callback method is not found');
                     }
                 }
@@ -313,34 +295,27 @@ Use \"--help\" for more information about a command.\n";
                 if ($cfg['worker_nums'] <= 0) {
                     throw new Exception('worker_nums value invalid');
                 }
-                if(!empty($cfg['hot_update_path']))
-                {
+                if (!empty($cfg['hot_update_path'])) {
                     //判断是否支持system
-                    if(!self::functionCheck('system'))
-                    {
+                    if (!self::functionCheck('system')) {
                         throw new Exception('function system has been disabled');
                     }
                 }
             }
             //检查dababase
-            $res=Database::getInstance($cfg['database'])->query("SHOW COLUMNS FROM ".$cfg['database']['table']);
+            $res = Database::getInstance($cfg['database'])->query("SHOW COLUMNS FROM " . $cfg['database']['table']);
 
-            if(!(array_column($res,'Field')===['id','payload','doat','dotimes','startat','endat','exception']))
-            {
-                throw new Exception('table '.$cfg['database']['table'].' field error');
+            if (!(array_column($res, 'Field') === ['id', 'payload', 'doat', 'dotimes', 'startat', 'endat', 'exception'])) {
+                throw new Exception('table ' . $cfg['database']['table'] . ' field error');
             }
 
             //检查redis
             Redis::getInstance($cfg['redis'])->ping();
-        }
-        catch (\Exception $e)
-        {
-            if(self::$is_cli)
-            {
+        } catch (\Exception $e) {
+            if (self::$is_cli) {
                 Console::display($e->getMessage());
             }
-            if($e instanceof Exception)
-            {
+            if ($e instanceof Exception) {
                 throw $e;
             }
             throw new Exception($e->getMessage());
@@ -348,15 +323,14 @@ Use \"--help\" for more information about a command.\n";
         return $cfg;
 
     }
-    protected static function functionCheck($functions){
-        if(!is_array($functions))
-        {
-            $functions=explode(',',$functions);
+
+    protected static function functionCheck($functions)
+    {
+        if (!is_array($functions)) {
+            $functions = explode(',', $functions);
         }
-        foreach ($functions as $function)
-        {
-            if(!function_exists($function))
-            {
+        foreach ($functions as $function) {
+            if (!function_exists($function)) {
                 return false;
             }
         }
@@ -368,14 +342,14 @@ Use \"--help\" for more information about a command.\n";
      * 启动.
      * @param $cfg
      */
-    public static function run($cfg=[])
+    public static function run($cfg = [])
     {
         self::checkEnv();
         self::parseCfg($cfg);
-        $options=self::parseCmd($cfg);
+        $options = self::parseCmd($cfg);
         self::checkCfg($cfg);
         self::daemonize($options);
-        self::$cfg=$cfg;
+        self::$cfg = $cfg;
         (new Master($cfg))->run();
     }
 
@@ -387,9 +361,10 @@ Use \"--help\" for more information about a command.\n";
      * @param mixed $doat 时间戳
      * @param bool $is_repeat 是否允许重复任务
      */
-    public static function push($class_name,$method_name,$param=[],$doat=null,$is_repeat=false){
+    public static function push($class_name, $method_name, $param = [], $doat = null, $is_repeat = false)
+    {
 
-        self::delay($class_name,$method_name,$param,$doat,$is_repeat);
+        self::delay($class_name, $method_name, $param, $doat, $is_repeat);
     }
 
     /**
@@ -399,39 +374,41 @@ Use \"--help\" for more information about a command.\n";
      * @param mixed $doat 时间戳
      * @param bool $is_repeat 是否允许重复任务
      */
-    public static function delay($class_name,$method_name,$param=[],$doat=null,$is_repeat=false){
-        if(empty(self::$cfg)) {
+    public static function delay($class_name, $method_name, $param = [], $doat = null, $is_repeat = false)
+    {
+        if (empty(self::$cfg)) {
             //输入配置
             self::cfg();
         }
-        $cfg=self::$cfg;
-        $payload=[
+        $cfg = self::$cfg;
+        $payload = [
             $class_name,
             $method_name,
             $param
         ];
-        $doat=$doat?:time();
-        if(!$is_repeat)
-        {
-            $sql='SELECT id FROM '.$cfg['database']['table'].
-                ' WHERE payload="'.addslashes(json_encode($payload)).'" and startat=0 and dotimes<10 limit 1';
-            $res=Database::getInstance(self::$cfg['database'])->query($sql);
-            if(!empty($res))
-            {
+        $doat = $doat ?: time();
+        if (!$is_repeat) {
+            $sql = 'SELECT id FROM ' . $cfg['database']['table'] .
+                ' WHERE payload="' . addslashes(json_encode($payload)) . '" and startat=0 and dotimes<10 limit 1';
+            $res = Database::getInstance(self::$cfg['database'])->query($sql);
+            if (!empty($res)) {
                 return;
             }
         }
-        $sql='INSERT INTO '.$cfg['database']['table'].
-            '(payload,doat) VALUES("'.addslashes(json_encode($payload)).'",'.$doat.')';
+        $sql = 'INSERT INTO ' . $cfg['database']['table'] .
+            '(payload,doat) VALUES("' . addslashes(json_encode($payload)) . '",' . $doat . ')';
 //        var_dump($sql);
         Database::getInstance(self::$cfg['database'])->exce($sql);
     }
+
     private static $cfg;
+
     //外部注入配置
-    public static function cfg($cfg=[]){
+    public static function cfg($cfg = [])
+    {
         self::parseCfg($cfg);
         self::checkCfg($cfg);
-        self::$cfg=$cfg;
+        self::$cfg = $cfg;
     }
 
 }

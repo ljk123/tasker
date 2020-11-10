@@ -18,47 +18,48 @@ class Master extends Process
 {
     use Singleton;
     protected $cfg;
-    protected $_workers=[];
-    private $_status=[];
+    protected $_workers = [];
+    private $_status = [];
+
     public function __construct($cfg)
     {
 
-        $this->cfg=$cfg;
+        $this->cfg = $cfg;
         $this->_initStatus();
         $this->setProcessTitle($this->cfg['master_title']);
         $this->_process_id = posix_getpid();
     }
+
     private function _initStatus()
     {
-        $redis=Redis::getInstance($this->cfg['redis']);
-        $res=$redis->lpop($this->cfg['redis']['queue_key'].'_master_status');
-        if(empty($res))
-        {
-            if(is_file(dirname($this->cfg['pid_path']).'/master_status.tmp'))
-            {
-                $res=file_get_contents(dirname($this->cfg['pid_path']).'/master_status.tmp');
-                @unlink(dirname($this->cfg['pid_path']).'/master_status.tmp');
+        $redis = Redis::getInstance($this->cfg['redis']);
+        $res = $redis->lpop($this->cfg['redis']['queue_key'] . '_master_status');
+        if (empty($res)) {
+            if (is_file(dirname($this->cfg['pid_path']) . '/master_status.tmp')) {
+                $res = file_get_contents(dirname($this->cfg['pid_path']) . '/master_status.tmp');
+                @unlink(dirname($this->cfg['pid_path']) . '/master_status.tmp');
             }
         }
-        $load_status=$res?unserialize($res):[];
-        if($load_status)
-        {
-            $this->_status=$load_status;
-        }
-        else {
-            $this->_status['start_memory']=memory_get_usage();
-            $this->_status['start_time']=Op::microtime();
+        $load_status = $res ? unserialize($res) : [];
+        if ($load_status) {
+            $this->_status = $load_status;
+        } else {
+            $this->_status['start_memory'] = memory_get_usage();
+            $this->_status['start_time'] = Op::microtime();
         }
     }
+
     protected function saveMasterPid()
     {
         // 保存pid以实现重载和停止
         if (false === file_put_contents($this->cfg['pid_path'], $this->_process_id)) {
-            Console::display('can not save pid to'.$this->cfg['pid_path']);
+            Console::display('can not save pid to' . $this->cfg['pid_path']);
         }
     }
+
     //安装信号
-    protected function installSignal(){
+    protected function installSignal()
+    {
         // SIGINT
         pcntl_signal(SIGINT, array($this, 'signalHandler'), false);
         // SIGTERM
@@ -103,7 +104,7 @@ class Master extends Process
      * 停止.
      * @param int $signal
      */
-    protected function stop($signal=SIGINT)
+    protected function stop($signal = SIGINT)
     {
         // 主进程给所有子进程发送退出信号
         $this->stopAllWorkers($signal);
@@ -121,7 +122,7 @@ class Master extends Process
     {
         // 停止所有worker即可,master会自动fork新worker
         $this->stopAllWorkers();
-        file_put_contents(dirname($this->cfg['pid_path']).'/reload.'.$this->_process_id,'1');
+        file_put_contents(dirname($this->cfg['pid_path']) . '/reload.' . $this->_process_id, '1');
     }
 
     /**
@@ -129,40 +130,37 @@ class Master extends Process
      */
     protected function status()
     {
-        $process_id=$this->_process_id;
-        $start_time=date('Y-m-d H:i:s',$this->_status['start_time']);
-        $memory=Op::memory2M( memory_get_usage()-$this->_status['start_memory']);
+        $process_id = $this->_process_id;
+        $start_time = date('Y-m-d H:i:s', $this->_status['start_time']);
+        $memory = Op::memory2M(memory_get_usage() - $this->_status['start_memory']);
         //运行了多少时间
-        $runtime=Op::dtime(Op::microtime()-$this->_status['start_time']);
+        $runtime = Op::dtime(Op::microtime() - $this->_status['start_time']);
         $allWorkerPid = $this->_workers;
-        $unstatused=[];
+        $unstatused = [];
         foreach ($allWorkerPid as $workerPid) {
             posix_kill($workerPid, SIGUSR1);
-            $unstatused[$workerPid]=$workerPid;
+            $unstatused[$workerPid] = $workerPid;
         }
-        $file_content=serialize(compact(
+        $file_content = serialize(compact(
                 'process_id',
                 'memory',
                 'runtime',
                 'start_time'
-            )).PHP_EOL;
-        $timeout=2;
-        $s_time=time();
-        while(!empty($unstatused) && time()-$s_time<$timeout)
-        {
-            foreach ($allWorkerPid as $workerPid)
-            {
-                $path='/tmp/worker_status'.$workerPid.'.tmp';
-                if(is_file($path))
-                {
+            )) . PHP_EOL;
+        $timeout = 2;
+        $s_time = time();
+        while (!empty($unstatused) && time() - $s_time < $timeout) {
+            foreach ($allWorkerPid as $workerPid) {
+                $path = '/tmp/worker_status' . $workerPid . '.tmp';
+                if (is_file($path)) {
                     Op::sleep(0.01);
-                    $file_content.=file_get_contents($path).PHP_EOL;
+                    $file_content .= file_get_contents($path) . PHP_EOL;
                     @unlink($path);
                     unset($unstatused[$workerPid]);
                 }
             }
         }
-        file_put_contents('/tmp/status.'.$this->_process_id,$file_content);
+        file_put_contents('/tmp/status.' . $this->_process_id, $file_content);
     }
 
     /**
@@ -193,8 +191,7 @@ class Master extends Process
             // 子进程退出
             exit(0);
         } else {
-            if(!empty($this->_workers))
-            {
+            if (!empty($this->_workers)) {
                 $this->stopAllWorkers();
             }
         }
@@ -205,18 +202,16 @@ class Master extends Process
      * 停止所有worker进程.
      * @param int $signal
      */
-    protected function stopAllWorkers($signal=SIGINT)
+    protected function stopAllWorkers($signal = SIGINT)
     {
         foreach ($this->_workers as $workerPid) {
             posix_kill($workerPid, $signal);
         }
-        $timeout=$this->cfg['stop_worker_timeout'];
-        $start_time=time();
-        while ($this->isAlive($this->_workers))
-        {
+        $timeout = $this->cfg['stop_worker_timeout'];
+        $start_time = time();
+        while ($this->isAlive($this->_workers)) {
             usleep(1000);
-            if(time()-$start_time>$timeout)
-            {
+            if (time() - $start_time > $timeout) {
                 // 子进程退出异常,强制kill
                 foreach ($this->_workers as $workerPid) {
                     $this->forceKill($workerPid);
@@ -225,8 +220,9 @@ class Master extends Process
             }
         }
         // 清空worker实例
-        $this->_workers= [];
+        $this->_workers = [];
     }
+
     protected function forceKill($pid)
     {
         // 进程是否存在
@@ -249,7 +245,7 @@ class Master extends Process
         }
 
         foreach ($pids as $pid) {
-            pcntl_waitpid($pid,$status,WNOHANG);
+            pcntl_waitpid($pid, $status, WNOHANG);
             if (posix_kill($pid, 0)) {
                 return true;
             }
@@ -264,26 +260,25 @@ class Master extends Process
      */
     protected function resetStdFd()
     {
-        if(Tasker::IS_DEBUG)
-        {
+        if (Tasker::IS_DEBUG) {
             return;
         }
 
-        global $argv,$STDOUT, $STDERR;
+        global $argv, $STDOUT, $STDERR;
 
         fclose(STDOUT);
         fclose(STDERR);
-        if(is_null($this->cfg['stdout_path']))
-        {
+        if (is_null($this->cfg['stdout_path'])) {
             return;
         }
-        $stdout_path=empty($this->cfg['stdout_path'])?
-            dirname(realpath($argv[0])).'/tasker.log':
+        $stdout_path = empty($this->cfg['stdout_path']) ?
+            dirname(realpath($argv[0])) . '/tasker.log' :
             $this->cfg['stdout_path'];
         $handle = fopen($stdout_path, "a");
         if ($handle) {
             unset($handle);
-            set_error_handler(function(){});
+            set_error_handler(function () {
+            });
             fclose($STDOUT);
             fclose($STDERR);
             $STDOUT = fopen($stdout_path, "a");
@@ -291,9 +286,10 @@ class Master extends Process
             restore_error_handler();
         }
         //这咯写入才会记录到日志
-        Console::log("master ".$this->_process_id." start success");
+        Console::log("master " . $this->_process_id . " start success");
 
     }
+
     /**
      * master进程监控worker.
      */
@@ -307,74 +303,68 @@ class Master extends Process
                 unset($this->_workers[$pid]);//把中断的子进程的进程id 剔除掉
             }
             $this->forkWorkers();
-            try{
+            try {
                 //读取任务丢到list里
                 Provider::moveToList($this->cfg);
                 //gc
                 Gc::table($this->cfg);
                 //扫描监听目录变化 重启master
-                if(HotUpdate::check($this->cfg['hot_update_path'],$this->cfg['hot_update_interval'])){
+                if (HotUpdate::check($this->cfg['hot_update_path'], $this->cfg['hot_update_interval'])) {
                     $this->hotUpdate();
                 }
-            }catch (\Exception $e)
-            {
-                echo  $e->getMessage();
+            } catch (\Exception $e) {
+                echo $e->getMessage();
             }
             Op::sleep(0.5);
             pcntl_signal_dispatch();
         }
     }
-    protected function hotUpdate(){
+
+    protected function hotUpdate()
+    {
         Database::free();
         Redis::free();
         Console::log('hot update restart start');
         $pid = pcntl_fork();
         // 父进程
-        if($pid>0)
-        {
+        if ($pid > 0) {
             //保存主进程状态
-            try{
-                Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'].'_master_status',serialize($this->_status));
-            }catch (\Exception $e)
-            {
+            try {
+                Redis::getInstance($this->cfg['redis'])->lpush($this->cfg['redis']['queue_key'] . '_master_status', serialize($this->_status));
+            } catch (\Exception $e) {
                 //保存到文件
-                file_put_contents(dirname($this->cfg['pid_path']).'/master_status.tmp',serialize($this->_status));
+                file_put_contents(dirname($this->cfg['pid_path']) . '/master_status.tmp', serialize($this->_status));
             }
             //通知子进程保存状态退出
             $this->stop(SIGUSR2);
-        }
-        elseif ($pid === 0) { // 重启子进程
+        } elseif ($pid === 0) { // 重启子进程
             //发送结束信号
             $this->setProcessTitle('task_hot_update');
-            posix_kill($this->_process_id,SIGINT);
-            $timeout=5;
-            $stime=time();
-            while(posix_kill($this->_process_id,0) && time()-$stime<$timeout){
+            posix_kill($this->_process_id, SIGINT);
+            $timeout = 5;
+            $stime = time();
+            while (posix_kill($this->_process_id, 0) && time() - $stime < $timeout) {
                 Op::sleep(0.1);
             }
-            if(posix_kill($this->_process_id,0))
-            {
+            if (posix_kill($this->_process_id, 0)) {
                 Console::log('hot update stop fail');
                 exit(0);
             }
             global $argv;
-            $cp_argv=$argv;
-            $cp_argv[0]=realpath($cp_argv[0]);
-            if(!in_array('-no_header',$cp_argv))
-            {
-                $cp_argv[]='-no_header';
+            $cp_argv = $argv;
+            $cp_argv[0] = realpath($cp_argv[0]);
+            if (!in_array('-no_header', $cp_argv)) {
+                $cp_argv[] = '-no_header';
             }
 
-            $cmd='php '.join(' ',$cp_argv);
+            $cmd = 'php ' . join(' ', $cp_argv);
             //防止重启失败 一直尝试重启
-            $last_call=0;
-            while(!is_file($this->cfg['pid_path']))
-            {
-                if(time()-$last_call>10)
-                {
+            $last_call = 0;
+            while (!is_file($this->cfg['pid_path'])) {
+                if (time() - $last_call > 10) {
                     Console::log("hot update call start $last_call");
                     system($cmd);
-                    $last_call=time();
+                    $last_call = time();
                 }
                 Op::sleep(0.1);
                 pcntl_signal_dispatch();//捕捉kill信号
@@ -383,7 +373,9 @@ class Master extends Process
             exit(0);
         }
     }
-    public function run(){
+
+    public function run()
+    {
 
         $this->saveMasterPid();
         $this->resetStdFd();
